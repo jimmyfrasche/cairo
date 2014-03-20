@@ -199,6 +199,23 @@ const (
 	ExtendPad extend = C.CAIRO_EXTEND_PAD
 )
 
+func (e extend) String() string {
+	var s string
+	switch e {
+	case ExtendNone:
+		s = "No"
+	case ExtendRepeat:
+		s = "Repeat"
+	case ExtendReflect:
+		s = "Relfect"
+	case ExtendPad:
+		s = "Pad"
+	default:
+		s = "unknown"
+	}
+	return s + " extend"
+}
+
 //cairo_fill_rule_t
 type fillRule int
 
@@ -224,7 +241,7 @@ const (
 	//the point will be filled.
 	FillRuleWinding fillRule = C.CAIRO_FILL_RULE_WINDING //default
 
-	//FileRuleEvenOdd counts the total number of intersections,
+	//FillRuleEvenOdd counts the total number of intersections,
 	//without regard to the orientation of the contour.
 	//If the total number of intersections is odd, the point will be filled.
 	FillRuleEvenOdd fillRule = C.CAIRO_FILL_RULE_EVEN_ODD
@@ -243,15 +260,50 @@ func (f fillRule) String() string {
 //cairo_filter_t
 type filter int
 
+//NB CAIRO_FILTER_GAUSSIAN is left off as the docs say it is currently unimplemented
+
+//The filter type indicates what filtering should be applied when reading pixel
+//values from patterns.
+//
 //Originally cairo_filter_t.
 const (
-	FilterFast     filter = C.CAIRO_FILTER_FAST
-	FilterGood     filter = C.CAIRO_FILTER_GOOD
-	FilterBest     filter = C.CAIRO_FILTER_BEST
-	FilterNearest  filter = C.CAIRO_FILTER_NEAREST
+	//FilterFast is a high performance filter with quality similar to
+	//FilterNearest.
+	FilterFast filter = C.CAIRO_FILTER_FAST
+
+	//FilterGood is a reasonable performance filter, with quality similiar to
+	//FilterBilinear.
+	FilterGood filter = C.CAIRO_FILTER_GOOD
+
+	//FilterBest is the highest quality filter, but may not be suitable
+	//for interactive use.
+	FilterBest filter = C.CAIRO_FILTER_BEST
+
+	//FilterNearest is nearest-neighbor filtering.
+	FilterNearest filter = C.CAIRO_FILTER_NEAREST
+
+	//FilterBilinear uses linear interpolation in two dimensions.
 	FilterBilinear filter = C.CAIRO_FILTER_BILINEAR
-	FilterGaussian filter = C.CAIRO_FILTER_GAUSSIAN
 )
+
+func (f filter) String() string {
+	var s string
+	switch f {
+	case FilterFast:
+		s = "Fast"
+	case FilterGood:
+		s = "Good"
+	case FilterBest:
+		s = "Best"
+	case FilterNearest:
+		s = "Nearest"
+	case FilterBilinear:
+		s = "Bilinear"
+	default:
+		s = "unknown"
+	}
+	return s + " filter"
+}
 
 //cairo_font_slant_t
 type fontSlant int
@@ -283,15 +335,37 @@ func (s fontSlant) String() string {
 //cairo_font_type_t
 type fontType int
 
+//A fontType describes the type of a given font face or scaled font.
+//The font types are also known as "font backends" within cairo.
 //
 //Originally cairo_font_type_t.
 const (
-	FontTypeToy      fontType = C.CAIRO_FONT_TYPE_TOY
-	FontTypeFreeType fontType = C.CAIRO_FONT_TYPE_FT
-	FontTypeWin32    fontType = C.CAIRO_FONT_TYPE_WIN32
-	FontTypeQuartz   fontType = C.CAIRO_FONT_TYPE_QUARTZ //previously CAIRO_FONT_TYPE_ATSUI
-	FontTypeUser     fontType = C.CAIRO_FONT_TYPE_USER
+	//FontTypeToy fonts are created using cairo's toy font api.
+	FontTypeToy fontType = C.CAIRO_FONT_TYPE_TOY
+	//FontTypeWin32 is a native Windows font.
+	FontTypeWin32 fontType = C.CAIRO_FONT_TYPE_WIN32
+	//FontTypeQuartz is a native Macintosh font.
+	FontTypeQuartz fontType = C.CAIRO_FONT_TYPE_QUARTZ //previously knonw as CAIRO_FONT_TYPE_ATSUI
+	//FontTypeUser was created using cairo's user font api.
+	FontTypeUser fontType = C.CAIRO_FONT_TYPE_USER
 )
+
+func (f fontType) String() string {
+	s := ""
+	switch f {
+	case FontTypeToy:
+		s = "toy"
+	case FontTypeWin32:
+		s = "Win32"
+	case FontTypeQuartz:
+		s = "Quartz"
+	case FontTypeUser:
+		s = "user"
+	default:
+		s = "unknown"
+	}
+	return "Font type " + s
+}
 
 //cairo_font_weight_t
 type fontWeight int
@@ -319,16 +393,56 @@ func (w fontWeight) String() string {
 //cairo_format_t
 type format int
 
+//A format identifies the memory format of image data.
+//
 //Originally cairo_format_t.
 const (
-	FormatInvalid   format = C.CAIRO_FORMAT_INVALID
-	FormatARGB32    format = C.CAIRO_FORMAT_ARGB32 //zero value
-	FormatRGB24     format = C.CAIRO_FORMAT_RGB24
-	FormatA8        format = C.CAIRO_FORMAT_A8
-	FormatA1        format = C.CAIRO_FORMAT_A1
+	//FormatInvalid specifies an unsupported or nonexistent format.
+	FormatInvalid format = C.CAIRO_FORMAT_INVALID
+
+	//FormatARGB32 specifies that each pixel is a native-endian 32 bit quanity
+	//listed as transparency, red, green, and then blue.
+	FormatARGB32 format = C.CAIRO_FORMAT_ARGB32 //zero value
+
+	//FormatRGB24 is the same as FormatARGB32 but the 8-bits of transparency
+	//are unused.
+	FormatRGB24 format = C.CAIRO_FORMAT_RGB24
+
+	//FormatA8 stores each pixel in an 8-bit quantity holding an alpha value.
+	FormatA8 format = C.CAIRO_FORMAT_A8
+
+	//FormatA1 stores each pixel in a 1-bit quantity holding an alpha value.
+	FormatA1 format = C.CAIRO_FORMAT_A1
+
+	//FormatRGB16_565 stores each pixel as a 16-bit quantity with 5 bits for
+	//red, 6 bits for green, and 5 bits for blue.
 	FormatRGB16_565 format = C.CAIRO_FORMAT_RGB16_565
-	FormatRGB30     format = C.CAIRO_FORMAT_RGB30
+
+	//FormatRGB30 is like FormatRGB24 but with 10 bits per pixel instead
+	//of 8.
+	FormatRGB30 format = C.CAIRO_FORMAT_RGB30
 )
+
+func (f format) String() string {
+	var s string
+	switch f {
+	case FormatARGB32:
+		s = "32bit ARGB"
+	case FormatRGB24:
+		s = "24bit RGB"
+	case FormatA8:
+		s = "A8"
+	case FormatA1:
+		s = "A1"
+	case FormatRGB16_565:
+		s = "5-6-5 RGB16"
+	case FormatRGB30:
+		s = "RGB30"
+	default: //grabs format invalid too
+		s = "unknown"
+	}
+	return s + " format"
+}
 
 //cairo_hint_metrics_t
 type hintMetrics int
@@ -386,7 +500,7 @@ type lineJoin int
 const (
 	//LineJoinMiter uses a sharp (angled) corner.
 	LineJoinMiter lineJoin = C.CAIRO_LINE_JOIN_MITER //default
-	//LineJoindRound uses a rounded join, the center of the circle
+	//LineJoinRound uses a rounded join, the center of the circle
 	//is the join point.
 	LineJoinRound lineJoin = C.CAIRO_LINE_JOIN_ROUND
 	//LineJoinBevel uses a cut-off join, the join is cut off at half
