@@ -119,7 +119,7 @@ type deviceType int
 //		A native device (win32, xcb, etc).
 //
 //	GL
-//		OpenGL or COGL.
+//		OpenGL or Cogl.
 //
 //	Pseudo
 //		A device that doesn't output to a screen of some kind (XML).
@@ -136,8 +136,8 @@ const (
 	DeviceTypeXLib deviceType = C.CAIRO_DEVICE_TYPE_XLIB
 	//DeviceTypeXML is an XML device.
 	DeviceTypeXML deviceType = C.CAIRO_DEVICE_TYPE_XML
-	//DeviceTypeCOGL is a COGL device.
-	DeviceTypeCOGL deviceType = C.CAIRO_DEVICE_TYPE_COGL
+	//DeviceTypeCogl is a Cogl device.
+	DeviceTypeCogl deviceType = C.CAIRO_DEVICE_TYPE_COGL
 	//DeviceTypeWin32 is a Win32 device.
 	DeviceTypeWin32 deviceType = C.CAIRO_DEVICE_TYPE_WIN32
 )
@@ -148,7 +148,7 @@ var devstr = map[deviceType]string{
 	DeviceTypeXCB:   "XCB",
 	DeviceTypeXLib:  "Xlib",
 	DeviceTypeXML:   "XML",
-	DeviceTypeCOGL:  "COGL",
+	DeviceTypeCogl:  "Cogl",
 	DeviceTypeWin32: "Win32",
 }
 
@@ -169,9 +169,9 @@ func (d deviceType) Native() bool {
 	return false
 }
 
-//GL returns true if the device type is an OpenGL or COGL device
+//GL returns true if the device type is an OpenGL or Cogl device
 func (d deviceType) GL() bool {
-	return d == DeviceTypeGL || d == DeviceTypeCOGL
+	return d == DeviceTypeGL || d == DeviceTypeCogl
 }
 
 //Pseudo returns true for pseudodevices (eg, XML).
@@ -463,17 +463,67 @@ const (
 	HintMetricsOn hintMetrics = C.CAIRO_HINT_METRICS_ON
 )
 
+func (h hintMetrics) String() string {
+	switch h {
+	case HintMetricsDefault:
+		return "Default hint metrics"
+	case HintMetricsOff:
+		return "No hint metrics"
+	case HintMetricsOn:
+		return "Hint metrics on"
+	}
+	return "unknown hint style"
+}
+
 //cairo_hint_style_t
 type hintStyle int
 
+//The hintStyle type specifies the hinting method to use for font outlines.
+// Hinting is the process of fitting outlines to the pixel grid in order
+//to improve the appearance of the result.
+//Since hinting outlines involves distorting them, it also reduces
+//the faithfulness to the original outline shapes.
+//Not all of the outline hinting styles are supported by all font backends.
+//
 //Originally cairo_hint_style_t.
 const (
+	//HintStyleDefault uses the default hint style for the font backend and target
+	//device.
 	HintStyleDefault hintStyle = C.CAIRO_HINT_STYLE_DEFAULT
-	HintStyleNone    hintStyle = C.CAIRO_HINT_STYLE_NONE
-	HintStyleSlight  hintStyle = C.CAIRO_HINT_STYLE_SLIGHT
-	HintStyleMedium  hintStyle = C.CAIRO_HINT_STYLE_MEDIUM
-	HintStyleFull    hintStyle = C.CAIRO_HINT_STYLE_FULL
+
+	//HintStyleNone does not hint outlines.
+	HintStyleNone hintStyle = C.CAIRO_HINT_STYLE_NONE
+
+	//HintStyleSlight outlines slightly, to improve contrast while retaining
+	//good fidelity of the original shapes.
+	HintStyleSlight hintStyle = C.CAIRO_HINT_STYLE_SLIGHT
+
+	//HintStyleMedium outlines with medium strength, giving a compromise
+	//between fidelity to the original shapes and contrast
+	HintStyleMedium hintStyle = C.CAIRO_HINT_STYLE_MEDIUM
+
+	//HintStyleFull outlines to maximize contrast.
+	HintStyleFull hintStyle = C.CAIRO_HINT_STYLE_FULL
 )
+
+func (h hintStyle) String() string {
+	s := "Hint style "
+	switch h {
+	case HintStyleDefault:
+		s = "Default hint style"
+	case HintStyleNone:
+		s = "No hint style"
+	case HintStyleSlight:
+		s += "slight"
+	case HintStyleMedium:
+		s += "medium"
+	case HintStyleFull:
+		s += "full"
+	default:
+		s = "unknown hint style"
+	}
+	return s
+}
 
 //cairo_line_cap_t
 type lineCap int
@@ -490,6 +540,21 @@ const (
 	//the end point.
 	LineCapSquare lineCap = C.CAIRO_LINE_CAP_SQUARE
 )
+
+func (l lineCap) String() string {
+	s := ""
+	switch l {
+	case LineCapButt:
+		s = "Butt" //lol
+	case LineCapRound:
+		s = "Round"
+	case LineCapSquare:
+		s = "Square"
+	default:
+		s = "unknown"
+	}
+	return s + " line cap"
+}
 
 //cairo_line_join_t
 type lineJoin int
@@ -508,56 +573,247 @@ const (
 	LineJoinBevel lineJoin = C.CAIRO_LINE_JOIN_BEVEL
 )
 
+func (l lineJoin) String() string {
+	s := ""
+	switch l {
+	case LineJoinMiter:
+		s = "Miter"
+	case LineJoinRound:
+		s = "Round"
+	case LineJoinBevel:
+		s = "Bevel"
+	default:
+		s = "unknown"
+	}
+	return s + " line join"
+}
+
 //cairo_operator_t
 type op int
 
+//An op sets the compositing operator for all cairo drawing operations.
+//
+//The default op is OpOver.
+//
+//The operators marked as unbounded modify their destination even outside
+//of the mask layer (that is, their effect is not bound by the mask layer).
+//However, their effect can still be limited by way of clipping.
+//
+//To keep things simple, the operator descriptions here document the behavior
+//for when both source and destination are either fully transparent or fully
+//opaque.
+//The actual implementation works for translucent layers too.
+//For a more detailed explanation of the effects of each operator,
+//including the mathematical definitions,
+//see http://cairographics.org/operators/ .
+//
 //Originally cairo_operator_t.
 const (
+	//OpClear clears destination layer (bounded).
 	OpClear op = C.CAIRO_OPERATOR_CLEAR
 
-	OpSource op = C.CAIRO_OPERATOR_SOURCE //default
-	OpOver   op = C.CAIRO_OPERATOR_OVER
-	OpIn     op = C.CAIRO_OPERATOR_IN
-	OpOut    op = C.CAIRO_OPERATOR_OUT
-	OpAtop   op = C.CAIRO_OPERATOR_ATOP
+	//OpSource replaces destination layer (bounded).
+	OpSource op = C.CAIRO_OPERATOR_SOURCE
 
-	OpDest     op = C.CAIRO_OPERATOR_DEST
+	//OpOver draws source layer on top of destination layer (bounded).
+	OpOver op = C.CAIRO_OPERATOR_OVER //default
+
+	//OpIn draws source where there was destination content (unbounded).
+	OpIn op = C.CAIRO_OPERATOR_IN
+
+	//OpOut draws source where there was no destination content (unounded).
+	OpOut op = C.CAIRO_OPERATOR_OUT
+
+	//OpAtop draws source on top of destination content and only there.
+	OpAtop op = C.CAIRO_OPERATOR_ATOP
+
+	//OpDest ignores the source.
+	OpDest op = C.CAIRO_OPERATOR_DEST
+
+	//OpDestOver draw destination on top of source.
 	OpDestOver op = C.CAIRO_OPERATOR_DEST_OVER
-	OpDestIn   op = C.CAIRO_OPERATOR_DEST_IN
-	OpDestOut  op = C.CAIRO_OPERATOR_DEST_OUT
+
+	//OpDestIn leaves destination only where there was source content.
+	OpDestIn op = C.CAIRO_OPERATOR_DEST_IN
+
+	//OpDestOut leaves destination only where there was no source content.
+	OpDestOut op = C.CAIRO_OPERATOR_DEST_OUT
+
+	//OpDestAtop leaves destination on top of source content and only there.
 	OpDestAtop op = C.CAIRO_OPERATOR_DEST_ATOP
 
-	OpXor      op = C.CAIRO_OPERATOR_XOR
-	OpAdd      op = C.CAIRO_OPERATOR_ADD
+	//OpXor shows source and destination where there is only one of them.
+	OpXor op = C.CAIRO_OPERATOR_XOR
+
+	//OpAdd accumulates source and destination layers.
+	OpAdd op = C.CAIRO_OPERATOR_ADD
+
+	//OpSaturate is like OpOver, but assumes source and dest are disjoint
+	//geometries.
 	OpSaturate op = C.CAIRO_OPERATOR_SATURATE
 
-	OpMultiply      op = C.CAIRO_OPERATOR_MULTIPLY
-	OpScreen        op = C.CAIRO_OPERATOR_SCREEN
-	OpOverlay       op = C.CAIRO_OPERATOR_OVERLAY
-	OpDarken        op = C.CAIRO_OPERATOR_DARKEN
-	OpLighten       op = C.CAIRO_OPERATOR_LIGHTEN
-	OpColorDodge    op = C.CAIRO_OPERATOR_COLOR_DODGE
-	OpColorBurn     op = C.CAIRO_OPERATOR_COLOR_BURN
-	OpHardLight     op = C.CAIRO_OPERATOR_HARD_LIGHT
-	OpSoftLight     op = C.CAIRO_OPERATOR_SOFT_LIGHT
-	OpDifference    op = C.CAIRO_OPERATOR_DIFFERENCE
-	OpExclusion     op = C.CAIRO_OPERATOR_EXCLUSION
-	OpHueHSL        op = C.CAIRO_OPERATOR_HSL_HUE
+	//OpMultiply multiplies source and destination layers.
+	//This causes the result to be at least as the darker inputs.
+	OpMultiply op = C.CAIRO_OPERATOR_MULTIPLY
+
+	//OpScreen complements and multiples source and destination.
+	//This causes the result to be as light as the lighter inputs.
+	OpScreen op = C.CAIRO_OPERATOR_SCREEN
+
+	//OpOverlay multiplies or screens, depending on the lightness
+	//of the destination color.
+	OpOverlay op = C.CAIRO_OPERATOR_OVERLAY
+
+	//OpDarken replaces the destination with source if is darker, otherwise
+	//keeps the source.
+	OpDarken op = C.CAIRO_OPERATOR_DARKEN
+
+	//OpLighten replaces the destiantion with source if it is lighter, otherwise
+	//keeps the source.
+	OpLighten op = C.CAIRO_OPERATOR_LIGHTEN
+
+	//OpColorDodge brightens the destination color to reflect the source color.
+	OpColorDodge op = C.CAIRO_OPERATOR_COLOR_DODGE
+
+	//OpColorBurn darkens the destination color to reflect the source color.
+	OpColorBurn op = C.CAIRO_OPERATOR_COLOR_BURN
+
+	//OpHardLight multiplies or screens, dependent on source color.
+	OpHardLight op = C.CAIRO_OPERATOR_HARD_LIGHT
+
+	//OpSoftLight darkens or lightens, dependent on source color.
+	OpSoftLight op = C.CAIRO_OPERATOR_SOFT_LIGHT
+
+	//OpDifference takes the difference of the source and destination color.
+	OpDifference op = C.CAIRO_OPERATOR_DIFFERENCE
+
+	//OpExclusion produces an effect similar to difference, but with lower contrast.
+	OpExclusion op = C.CAIRO_OPERATOR_EXCLUSION
+
+	//OpHueHSL creates a color with the hue of the source and the saturation
+	//and luminosity of the target.
+	OpHueHSL op = C.CAIRO_OPERATOR_HSL_HUE
+
+	//OpSaturationHSL creates a color with the saturation of the source
+	//and the hue and luminosity of the target.
+	//Painting with this mode onto a gray area produces no change.
 	OpSaturationHSL op = C.CAIRO_OPERATOR_HSL_SATURATION
-	OpColorHSL      op = C.CAIRO_OPERATOR_HSL_COLOR
+
+	//OpColorHSL creates a color with the hue and saturation of the source
+	//and the luminosity of the target.
+	//This preserves the gray levels of the target and useful for coloring
+	//monochrome images or tinting color images.
+	OpColorHSL op = C.CAIRO_OPERATOR_HSL_COLOR
+
+	//OpLuminosityHSL creates a color with the luminosity of the source
+	//and the hue and saturation of the target.
+	//This produces an inverse effect to OpColorHSL.
 	OpLuminosityHSL op = C.CAIRO_OPERATOR_HSL_LUMINOSITY
 )
+
+func (o op) String() string {
+	s := ""
+	switch o {
+	case OpClear:
+		s = "Clear"
+	case OpSource:
+		s = "Source"
+	case OpOver:
+		s = "Over"
+	case OpIn:
+		s = "In"
+	case OpOut:
+		s = "Out"
+	case OpAtop:
+		s = "Atop"
+	case OpDest:
+		s = "Dest"
+	case OpDestOver:
+		s = "Dest Over"
+	case OpDestIn:
+		s = "Dest In"
+	case OpDestOut:
+		s = "Dest Out"
+	case OpDestAtop:
+		s = "Dest Atop"
+	case OpXor:
+		s = "Xor"
+	case OpAdd:
+		s = "Add"
+	case OpSaturate:
+		s = "Saturate"
+	case OpMultiply:
+		s = "Multiply"
+	case OpScreen:
+		s = "Screen"
+	case OpOverlay:
+		s = "Overlay"
+	case OpDarken:
+		s = "Darken"
+	case OpLighten:
+		s = "Lighten"
+	case OpColorDodge:
+		s = "Color Dodge"
+	case OpColorBurn:
+		s = "Color Burn"
+	case OpHardLight:
+		s = "Hard Light"
+	case OpSoftLight:
+		s = "Soft Light"
+	case OpDifference:
+		s = "Difference"
+	case OpExclusion:
+		s = "Exclusion"
+	case OpHueHSL:
+		s = "HSL Hue"
+	case OpSaturationHSL:
+		s = "HSL Saturation"
+	case OpColorHSL:
+		s = "HSL Color"
+	case OpLuminosityHSL:
+		s = "HSL Luminosity"
+	default:
+		s = "unknown"
+	}
+	return s + " operation"
+}
 
 //cairo_path_data_type_t
 type pathDataType int
 
+//BUG(jmf): Make sure that cairo_path_t is named Path
+
+//A pathDataType is used to describe the type of one portion of a path
+//when represented as a Path.
+//
 //Originally cairo_path_data_type_t.
 const (
-	PathMoveTo    pathDataType = C.CAIRO_PATH_MOVE_TO
-	PathLineTo    pathDataType = C.CAIRO_PATH_LINE_TO
-	PathCurveTo   pathDataType = C.CAIRO_PATH_CURVE_TO
+	//PathMoveTo is a move-to operation.
+	PathMoveTo pathDataType = C.CAIRO_PATH_MOVE_TO
+	//PathLineTo is a line-to operation.
+	PathLineTo pathDataType = C.CAIRO_PATH_LINE_TO
+	//PathCurveTo is a curve-to operation.
+	PathCurveTo pathDataType = C.CAIRO_PATH_CURVE_TO
+	//PathClosePath is a close-path operation.
 	PathClosePath pathDataType = C.CAIRO_PATH_CLOSE_PATH
 )
+
+func (p pathDataType) String() string {
+	s := ""
+	switch p {
+	case PathMoveTo:
+		s = "move-to"
+	case PathLineTo:
+		s = "line-to"
+	case PathCurveTo:
+		s = "curve-to"
+	case PathClosePath:
+		s = "close-path"
+	default:
+		return "unknown path operation"
+	}
+	return "A path" + s + " operation"
+}
 
 //cairo_pdf_version_t
 type pdfVersion int
@@ -596,50 +852,180 @@ func (p psLevel) String() string {
 }
 
 //cairo_status_t is handled in error.go
-//BUG(jmf): make this not a lie ^
 
 //cairo_subpixel_order_t
 type subpixelOrder int
 
 //Originally cairo_subpixel_order_t.
 const (
+	//SubpixelOrderDefault uses the default subpixel order for the target device.
 	SubpixelOrderDefault subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_DEFAULT
-	SubpixelOrderRGB     subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_RGB
-	SubpixelOrderBGR     subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_BGR
-	SubpixelOrderVRGB    subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_VRGB
-	SubpixelOrderVBGR    subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_VBGR
+	//SubpixelOrderRGB organizes subpixels horizontally with red at the left.
+	SubpixelOrderRGB subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_RGB
+	//SubpixelOrderBGR organizes supixels horizontally with blue at the left.
+	SubpixelOrderBGR subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_BGR
+	//SubpixelOrderVRGB organizes supixels vertically with red on top.
+	SubpixelOrderVRGB subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_VRGB
+	//SubpixelOrderVBGR organizes supixels vertically with blue on top.
+	SubpixelOrderVBGR subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_VBGR
 )
+
+func (o subpixelOrder) String() string {
+	var s string
+	switch o {
+	case SubpixelOrderRGB:
+		s = "RGB"
+	case SubpixelOrderBGR:
+		s = "BGR"
+	case SubpixelOrderVRGB:
+		s = "VRGB"
+	case SubpixelOrderVBGR:
+		s = "VBGR"
+	case SubpixelOrderDefault:
+		return "Default subpixel ordering"
+	default:
+		return "unknown subpixel ordering"
+	}
+	return "Subpixels ordered " + s
+}
 
 //cairo_surface_type_t
 type surfaceType int
 
+//A surfaceType describes the type of a given surface.
+//The surface types are also known as "backends" or "surface backends" within
+//cairo.
+//
+//
+//
 //Originally cairo_surface_type_t.
 const (
-	SurfaceTypeImage         surfaceType = C.CAIRO_SURFACE_TYPE_IMAGE
-	SurfaceTypePDF           surfaceType = C.CAIRO_SURFACE_TYPE_PDF
-	SurfaceTypePS            surfaceType = C.CAIRO_SURFACE_TYPE_PS
-	SurfaceTypeXLib          surfaceType = C.CAIRO_SURFACE_TYPE_XLIB
-	SurfaceTypeXCB           surfaceType = C.CAIRO_SURFACE_TYPE_XCB
-	SurfaceTypeGlitz         surfaceType = C.CAIRO_SURFACE_TYPE_GLITZ
-	SurfaceTypeQuartz        surfaceType = C.CAIRO_SURFACE_TYPE_QUARTZ
-	SurfaceTypeWin32         surfaceType = C.CAIRO_SURFACE_TYPE_WIN32
-	SurfaceTypeBeOS          surfaceType = C.CAIRO_SURFACE_TYPE_BEOS
-	SurfaceTypeDirectFB      surfaceType = C.CAIRO_SURFACE_TYPE_DIRECTFB
-	SurfaceTypeSVG           surfaceType = C.CAIRO_SURFACE_TYPE_SVG
-	SurfaceTypeOS2           surfaceType = C.CAIRO_SURFACE_TYPE_OS2
+	//SurfaceTypeImage is an image surface.
+	SurfaceTypeImage surfaceType = C.CAIRO_SURFACE_TYPE_IMAGE
+
+	//SurfaceTypePDF is a PDF surface.
+	SurfaceTypePDF surfaceType = C.CAIRO_SURFACE_TYPE_PDF
+
+	//SurfaceTypePS is a PS surface.
+	SurfaceTypePS surfaceType = C.CAIRO_SURFACE_TYPE_PS
+
+	//SurfaceTypeXLib is an X lib surface.
+	SurfaceTypeXLib surfaceType = C.CAIRO_SURFACE_TYPE_XLIB
+
+	//SurfaceTypeXCB is an XCB surface.
+	SurfaceTypeXCB surfaceType = C.CAIRO_SURFACE_TYPE_XCB
+
+	//SurfaceTypeGlitz is a Glitz surface.
+	SurfaceTypeGlitz surfaceType = C.CAIRO_SURFACE_TYPE_GLITZ
+
+	//SurfaceTypeQuartz is a Quartz surface.
+	SurfaceTypeQuartz surfaceType = C.CAIRO_SURFACE_TYPE_QUARTZ
+
+	//SurfaceTypeWin32 is a Win32 surface
+	SurfaceTypeWin32 surfaceType = C.CAIRO_SURFACE_TYPE_WIN32
+
+	//SurfaceTypeBeOS is a BeOS surface.
+	SurfaceTypeBeOS surfaceType = C.CAIRO_SURFACE_TYPE_BEOS
+
+	//SurfaceTypeDirectFB is a DirectFB surface.
+	SurfaceTypeDirectFB surfaceType = C.CAIRO_SURFACE_TYPE_DIRECTFB
+
+	//SurfaceTypeSVG is an SVG surface.
+	SurfaceTypeSVG surfaceType = C.CAIRO_SURFACE_TYPE_SVG
+
+	//SurfaceTypeOS2 is an OS/2 surface.
+	SurfaceTypeOS2 surfaceType = C.CAIRO_SURFACE_TYPE_OS2
+
+	//SurfaceTypeWin32Printing is a Win32 printing surface.
 	SurfaceTypeWin32Printing surfaceType = C.CAIRO_SURFACE_TYPE_WIN32_PRINTING
-	SurfaceTypeQuartzImage   surfaceType = C.CAIRO_SURFACE_TYPE_QUARTZ_IMAGE
-	SurfaceTypeQT            surfaceType = C.CAIRO_SURFACE_TYPE_QT
-	SurfaceTypeRecording     surfaceType = C.CAIRO_SURFACE_TYPE_RECORDING
-	SurfaceTypeVG            surfaceType = C.CAIRO_SURFACE_TYPE_VG
-	SurfaceTypeGL            surfaceType = C.CAIRO_SURFACE_TYPE_GL
-	SurfaceTypeDRM           surfaceType = C.CAIRO_SURFACE_TYPE_DRM
-	SurfaceTypeTee           surfaceType = C.CAIRO_SURFACE_TYPE_TEE
-	SurfaceTypeXML           surfaceType = C.CAIRO_SURFACE_TYPE_XML
-	SurfaceTypeSkia          surfaceType = C.CAIRO_SURFACE_TYPE_SKIA
-	SurfaceTypeSubsurface    surfaceType = C.CAIRO_SURFACE_TYPE_SUBSURFACE
-	SurfaceTypeCOGL          surfaceType = C.CAIRO_SURFACE_TYPE_COGL
+
+	//SurfaceTypeQuartzImage is a Quartz image surface.
+	SurfaceTypeQuartzImage surfaceType = C.CAIRO_SURFACE_TYPE_QUARTZ_IMAGE
+
+	//SurfaceTypeQT is a QT surface.
+	SurfaceTypeQT surfaceType = C.CAIRO_SURFACE_TYPE_QT
+
+	//SurfaceTypeRecording is a recording surface.
+	SurfaceTypeRecording surfaceType = C.CAIRO_SURFACE_TYPE_RECORDING
+
+	//SurfaceTypeVG is a VG surface.
+	SurfaceTypeVG surfaceType = C.CAIRO_SURFACE_TYPE_VG
+
+	//SurfaceTypeGL is an OpenGL surface.
+	SurfaceTypeGL surfaceType = C.CAIRO_SURFACE_TYPE_GL
+
+	//SurfaceTypeDRM is a DRM surface.
+	SurfaceTypeDRM surfaceType = C.CAIRO_SURFACE_TYPE_DRM
+
+	//SurfaceTypeTee is a tee surface.
+	SurfaceTypeTee surfaceType = C.CAIRO_SURFACE_TYPE_TEE
+
+	//SurfaceTypeXML is an XML surface.
+	SurfaceTypeXML surfaceType = C.CAIRO_SURFACE_TYPE_XML
+
+	//SurfaceTypeSkia is a Skia surface.
+	SurfaceTypeSkia surfaceType = C.CAIRO_SURFACE_TYPE_SKIA
+
+	//SurfaceTypeSubsurface is a subsurface.
+	SurfaceTypeSubsurface surfaceType = C.CAIRO_SURFACE_TYPE_SUBSURFACE
+
+	//SurfaceTypeCogl is a Cogl surface.
+	SurfaceTypeCogl surfaceType = C.CAIRO_SURFACE_TYPE_COGL
 )
 
-//BUG(jmf): document all "enums"
-//BUG(jmf): add String methods for all enums
+func (t surfaceType) String() string {
+	s := ""
+	switch t {
+	case SurfaceTypeImage:
+		s = "Image"
+	case SurfaceTypePDF:
+		s = "PDF"
+	case SurfaceTypePS:
+		s = "PS"
+	case SurfaceTypeXLib:
+		s = "X lib"
+	case SurfaceTypeXCB:
+		s = "XCB"
+	case SurfaceTypeGlitz:
+		s = "Glitz"
+	case SurfaceTypeQuartz:
+		s = "Quartz"
+	case SurfaceTypeWin32:
+		s = "Win32"
+	case SurfaceTypeBeOS:
+		s = "BeOS"
+	case SurfaceTypeDirectFB:
+		s = "DirectFB"
+	case SurfaceTypeSVG:
+		s = "SVG"
+	case SurfaceTypeOS2:
+		s = "OS/2"
+	case SurfaceTypeWin32Printing:
+		s = "Win32 printing"
+	case SurfaceTypeQuartzImage:
+		s = "Quartz image"
+	case SurfaceTypeQT:
+		s = "QT"
+	case SurfaceTypeRecording:
+		s = "Recording"
+	case SurfaceTypeVG:
+		s = "VG"
+	case SurfaceTypeGL:
+		s = "OpenGL"
+	case SurfaceTypeDRM:
+		s = "DRM"
+	case SurfaceTypeTee:
+		s = "Tee"
+	case SurfaceTypeXML:
+		s = "XML"
+	case SurfaceTypeSkia:
+		s = "Skia"
+	case SurfaceTypeSubsurface:
+		s = "Subsurface"
+	case SurfaceTypeCogl:
+		s = "Cogl"
+	default:
+		s = "unknown"
+	}
+	return s + " surface type"
+}
