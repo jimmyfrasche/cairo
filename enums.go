@@ -55,6 +55,8 @@ const (
 	AntialiasBest antialias = C.CAIRO_ANTIALIAS_BEST
 )
 
+//BUG(jmf): need to check cairo source to make sure the antialias String method isn't crazy.
+
 func (a antialias) String() string {
 	if a == AntialiasNone {
 		return "No antialiasing"
@@ -109,17 +111,73 @@ func (c content) String() string {
 //cairo_device_type_t
 type deviceType int
 
+//A deviceType describes the type of a given device, also known as a "backend".
+//
+//A deviceType value has the following methods, in addition to String, which all return bool:
+//
+//	Native
+//		A native device (win32, xcb, etc).
+//
+//	GL
+//		OpenGL or COGL.
+//
+//	Pseudo
+//		A device that doesn't output to a screen of some kind (XML).
 //
 //Originally cairo_device_type_t.
 const (
-	DeviceTypeDRM   deviceType = C.CAIRO_DEVICE_TYPE_DRM
-	DeviceTypeGl    deviceType = C.CAIRO_DEVICE_TYPE_GL
-	DeviceTypeXCB   deviceType = C.CAIRO_DEVICE_TYPE_XCB
-	DeviceTypeXLib  deviceType = C.CAIRO_DEVICE_TYPE_XLIB
-	DeviceTypeXML   deviceType = C.CAIRO_DEVICE_TYPE_XML
-	DeviceTypeCOGL  deviceType = C.CAIRO_DEVICE_TYPE_COGL
+	//DeviceTypeDRM is a Direct Render Manager device.
+	DeviceTypeDRM deviceType = C.CAIRO_DEVICE_TYPE_DRM
+	//DeviceTypeGL is an OpenGL device.
+	DeviceTypeGL deviceType = C.CAIRO_DEVICE_TYPE_GL
+	//DeviceTypeXCB is an XCB device.
+	DeviceTypeXCB deviceType = C.CAIRO_DEVICE_TYPE_XCB
+	//DeviceTypeXLib is an X lib device.
+	DeviceTypeXLib deviceType = C.CAIRO_DEVICE_TYPE_XLIB
+	//DeviceTypeXML is an XML device.
+	DeviceTypeXML deviceType = C.CAIRO_DEVICE_TYPE_XML
+	//DeviceTypeCOGL is a COGL device.
+	DeviceTypeCOGL deviceType = C.CAIRO_DEVICE_TYPE_COGL
+	//DeviceTypeWin32 is a Win32 device.
 	DeviceTypeWin32 deviceType = C.CAIRO_DEVICE_TYPE_WIN32
 )
+
+var devstr = map[deviceType]string{
+	DeviceTypeDRM:   "DRM",
+	DeviceTypeGL:    "OpenGL",
+	DeviceTypeXCB:   "XCB",
+	DeviceTypeXLib:  "Xlib",
+	DeviceTypeXML:   "XML",
+	DeviceTypeCOGL:  "COGL",
+	DeviceTypeWin32: "Win32",
+}
+
+func (d deviceType) String() string {
+	s := devstr[d]
+	if s == "" {
+		s = "unknown"
+	}
+	return s + " device"
+}
+
+//Native returns true if the device type is a native platform type.
+func (d deviceType) Native() bool {
+	switch d {
+	case DeviceTypeDRM, DeviceTypeXCB, DeviceTypeXLib, DeviceTypeWin32:
+		return true
+	}
+	return false
+}
+
+//GL returns true if the device type is an OpenGL or COGL device
+func (d deviceType) GL() bool {
+	return d == DeviceTypeGL || d == DeviceTypeCOGL
+}
+
+//Pseudo returns true for pseudodevices (eg, XML).
+func (d deviceType) Pseudo() bool {
+	return d == DeviceTypeXML
+}
 
 //cairo_extend_t
 type extend int
