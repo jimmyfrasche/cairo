@@ -9,32 +9,108 @@ import "C"
 //cairo_antialias_t
 type antialias int
 
+//Specifies the type of antialiasing to do when rendering text or shapes.
+//
+//As it is not necessarily clear from the above what advantages a particular
+//antialias method provides, since libcairo 1.12, there is also a set of hints:
+//	AntialiasFast
+//		Allow the backend to degrade raster quality for speed
+//	AntialiasGood
+//		A balance between speed and quality
+//	AntialiasBest
+//		A high-fidelity, but potentially slow, raster mode
+//
+//These make no guarantee on how the backend will perform its rasterisation
+//(if it even rasterises!), nor that they have any differing effect other
+//than to enable some form of antialiasing. In the case of glyph rendering,
+//AntialiasFast and AntialiasGood will be mapped to AntialiasGray,
+//with AntialiasBest being equivalent to AntialiasSubpixel.
+//
+//The interpretation of AntialiasDefault is left entirely up to the backend,
+//typically this will be similar to AntialiasGood.
+//
+//Originally cairo_antialias_t.
 const (
+	//AntialiasDefault uses the default antialiasing for the subsystem
+	//and target device.
 	AntialiasDefault antialias = C.CAIRO_ANTIALIAS_DEFAULT
 
-	//Methods
-	AntialiasNone     antialias = C.CAIRO_ANTIALIAS_NONE
-	AntialiasGray     antialias = C.CAIRO_ANTIALIAS_GRAY
-	AntialiasSubPixel antialias = C.CAIRO_ANTIALIAS_SUBPIXEL
+	//AntialiasNone uses a bilevel alpha mask.
+	AntialiasNone antialias = C.CAIRO_ANTIALIAS_NONE
+	//AntialiasGray performs single-color antialiasing (using shades of gray
+	//for black text on white background, for example).
+	AntialiasGray antialias = C.CAIRO_ANTIALIAS_GRAY
+	//AntialiasSubpixel performs antialiasing by taking advantage of the order
+	//of subpixel elements on devices such as LCD panels.
+	AntialiasSubpixel antialias = C.CAIRO_ANTIALIAS_SUBPIXEL
 
-	//Hints
+	//AntialiasFast is a hint that the backend should perform some antialiasing
+	//but prefer speed over quality.
 	AntialiasFast antialias = C.CAIRO_ANTIALIAS_FAST
+	//AntialiasGood is a hint that the backend should balance quality against
+	//performance.
 	AntialiasGood antialias = C.CAIRO_ANTIALIAS_GOOD
+	//AntialiasBest is a hint that the backend should render at the highest
+	//quality, sacrificing speed if necessary.
 	AntialiasBest antialias = C.CAIRO_ANTIALIAS_BEST
 )
+
+func (a antialias) String() string {
+	if a == AntialiasNone {
+		return "No antialiasing"
+	}
+	s := ""
+	switch {
+	case a&^AntialiasGray == 0:
+		s += "Gray "
+	case a&^AntialiasSubpixel == 0:
+		s += "Supixel "
+	}
+	switch {
+	case a&^AntialiasFast == 0:
+		s += "Fast "
+	case a&^AntialiasGood == 0:
+		s += "Good "
+	case a&^AntialiasBest == 0:
+		s += "Best "
+	}
+	return s + "antialiasing"
+}
 
 //cairo_content_t
 type content int
 
+//Content is used to describe the content that a surface will contain, whether
+//color information, alpha (translucence vs. opacity), or both.
+//
+//Originally cairo_content_t.
 const (
-	ContentColor      content = C.CAIRO_CONTENT_COLOR
-	ContentAlpha      content = C.CAIRO_CONTENT_ALPHA
+	//ContentColor specifies that the surface will hold color content only.
+	ContentColor content = C.CAIRO_CONTENT_COLOR
+	//ContentAlpha specifies that the surface will hold alpha content only.
+	ContentAlpha content = C.CAIRO_CONTENT_ALPHA
+	//ContentColorAlpha specifies that the surface will hold color and alpha
+	//content.
 	ContentColorAlpha content = C.CAIRO_CONTENT_COLOR_ALPHA
 )
+
+func (c content) String() string {
+	switch c {
+	case ContentColor:
+		return "Color content only"
+	case ContentAlpha:
+		return "Alpha content only"
+	case ContentColorAlpha:
+		return "Color and alpha content"
+	}
+	return "unknown content"
+}
 
 //cairo_device_type_t
 type deviceType int
 
+//
+//Originally cairo_device_type_t.
 const (
 	DeviceTypeDRM   deviceType = C.CAIRO_DEVICE_TYPE_DRM
 	DeviceTypeGl    deviceType = C.CAIRO_DEVICE_TYPE_GL
@@ -48,24 +124,68 @@ const (
 //cairo_extend_t
 type extend int
 
+//The extend type describes how pattern color/alpha will be determined
+//for areas "outside" the pattern's natural area, (for example, outside
+//the surface bounds or outside the gradient geometry).
+//
+//Originally cairo_extend_t.
 const (
-	ExtendNone    extend = C.CAIRO_EXTEND_NONE
-	ExtendRepeat  extend = C.CAIRO_EXTEND_REPEAT
+	//ExtendNone makes pixels outside of the source pattern are fully transparent.
+	ExtendNone extend = C.CAIRO_EXTEND_NONE
+	//ExtendRepeat means the pattern is tiled by repeating.
+	ExtendRepeat extend = C.CAIRO_EXTEND_REPEAT
+	//ExtendReflect means the pattern is tiled by reflecting at the edges.
 	ExtendReflect extend = C.CAIRO_EXTEND_REFLECT
-	ExtendPad     extend = C.CAIRO_EXTEND_PAD
+	//ExtendPad means pixels outside of the pattern copy the closest pixel
+	//from the source.
+	ExtendPad extend = C.CAIRO_EXTEND_PAD
 )
 
 //cairo_fill_rule_t
 type fillRule int
 
+//The fillRule type is used to select how paths are filled.
+//For both fill rules, whether or not a point is included in the fill
+//is determined by taking a ray from that point to infinity and looking
+//at intersections with the path.
+//The ray can be in any direction, as long as it doesn't pass through
+//the end point of a segment or have a tricky intersection
+//such as intersecting tangent to the path.
+//(Note that filling is not actually implemented in this way.
+//This is just a description of the rule that is applied.)
+//
+//The default fillRule is FillRuleWinding.
+//
+//Originally cairo_fill_rule_t.
 const (
-	FillRuleWinding fillRule = C.CAIRO_FILL_RULE_WINDING
+	//FillRuleWinding works as follows:
+	//If the path crosses the ray from left-to-right, counts +1.
+	//If the path crosses the ray from right to left, counts -1.
+	//(Left and right are determined from the perspective of looking along
+	//the ray from the starting point.) If the total count is non-zero,
+	//the point will be filled.
+	FillRuleWinding fillRule = C.CAIRO_FILL_RULE_WINDING //default
+
+	//FileRuleEvenOdd counts the total number of intersections,
+	//without regard to the orientation of the contour.
+	//If the total number of intersections is odd, the point will be filled.
 	FillRuleEvenOdd fillRule = C.CAIRO_FILL_RULE_EVEN_ODD
 )
+
+func (f fillRule) String() string {
+	switch f {
+	case FillRuleWinding:
+		return "winding fill rule"
+	case FillRuleEvenOdd:
+		return "even-odd fill rule"
+	}
+	return "unknown fill rule"
+}
 
 //cairo_filter_t
 type filter int
 
+//Originally cairo_filter_t.
 const (
 	FilterFast     filter = C.CAIRO_FILTER_FAST
 	FilterGood     filter = C.CAIRO_FILTER_GOOD
@@ -79,20 +199,39 @@ const (
 type fontSlant int
 
 //Specifies variants of a font face based on their slant.
+//
+//Originally cairo_font_slant_t.
 const (
-	FontSlantNormal  fontSlant = C.CAIRO_FONT_SLANT_NORMAL
-	FontSlantItalic  fontSlant = C.CAIRO_FONT_SLANT_ITALIC
+	//FontSlantNormal is standard upright font style.
+	FontSlantNormal fontSlant = C.CAIRO_FONT_SLANT_NORMAL
+	//FontSlantItalic is italic font style.
+	FontSlantItalic fontSlant = C.CAIRO_FONT_SLANT_ITALIC
+	//FontSlantOblique is oblique font style.
 	FontSlantOblique fontSlant = C.CAIRO_FONT_SLANT_OBLIQUE
 )
+
+func (s fontSlant) String() string {
+	switch s {
+	case FontSlantNormal:
+		return "normal font slant"
+	case FontSlantItalic:
+		return "italic font slant"
+	case FontSlantOblique:
+		return "oblique font slant"
+	}
+	return "unknown font slant"
+}
 
 //cairo_font_type_t
 type fontType int
 
+//
+//Originally cairo_font_type_t.
 const (
 	FontTypeToy      fontType = C.CAIRO_FONT_TYPE_TOY
 	FontTypeFreeType fontType = C.CAIRO_FONT_TYPE_FT
 	FontTypeWin32    fontType = C.CAIRO_FONT_TYPE_WIN32
-	FontTypeQuartz   fontType = C.CAIRO_FONT_TYPE_QUARTZ //previous CAIRO_FONT_TYPE_ATSUI
+	FontTypeQuartz   fontType = C.CAIRO_FONT_TYPE_QUARTZ //previously CAIRO_FONT_TYPE_ATSUI
 	FontTypeUser     fontType = C.CAIRO_FONT_TYPE_USER
 )
 
@@ -100,14 +239,29 @@ const (
 type fontWeight int
 
 //Specifies variants of a font face based on their weight.
+//
+//Orginally cairo_font_weight_t.
 const (
+	//FontWeightNormal is normal font weight.
 	FontWeightNormal fontWeight = C.CAIRO_FONT_WEIGHT_NORMAL
-	FontWeightBold   fontWeight = C.CAIRO_FONT_WEIGHT_BOLD
+	//FontWeightBold is bold font weight.
+	FontWeightBold fontWeight = C.CAIRO_FONT_WEIGHT_BOLD
 )
+
+func (w fontWeight) String() string {
+	switch w {
+	case FontWeightNormal:
+		return "normal font weight"
+	case FontWeightBold:
+		return "bold font weight"
+	}
+	return "unknown font weight"
+}
 
 //cairo_format_t
 type format int
 
+//Originally cairo_format_t.
 const (
 	FormatInvalid   format = C.CAIRO_FORMAT_INVALID
 	FormatARGB32    format = C.CAIRO_FORMAT_ARGB32 //zero value
@@ -125,6 +279,8 @@ type hintMetrics int
 //them so that they are integer values in device space. Doing this improves
 //the consistency of letter and line spacing, however it also means that text
 //will be laid out differently at different zoom factors.
+//
+//Oringally cairo_hint_metrics_t.
 const (
 	//HintMetricsDefault use hint metrics in the default manner
 	//for the font backend and target device.
@@ -138,6 +294,7 @@ const (
 //cairo_hint_style_t
 type hintStyle int
 
+//Originally cairo_hint_style_t.
 const (
 	HintStyleDefault hintStyle = C.CAIRO_HINT_STYLE_DEFAULT
 	HintStyleNone    hintStyle = C.CAIRO_HINT_STYLE_NONE
@@ -150,6 +307,8 @@ const (
 type lineCap int
 
 //Specifies how to render the endpoints of the path when stroking.
+//
+//Originally cairo_line_cap_t.
 const (
 	//LineCapButt starts(stops) the line exactly at the start(end) point.
 	LineCapButt lineCap = C.CAIRO_LINE_CAP_BUTT
@@ -163,15 +322,24 @@ const (
 //cairo_line_join_t
 type lineJoin int
 
+//Specifies how to render the junction of two lines when stroking.
+//
+//Originally cairo_line_join_t.
 const (
-	LineJoinMiter lineJoin = C.CAIRO_LINE_JOIN_MITER
+	//LineJoinMiter uses a sharp (angled) corner.
+	LineJoinMiter lineJoin = C.CAIRO_LINE_JOIN_MITER //default
+	//LineJoindRound uses a rounded join, the center of the circle
+	//is the join point.
 	LineJoinRound lineJoin = C.CAIRO_LINE_JOIN_ROUND
+	//LineJoinBevel uses a cut-off join, the join is cut off at half
+	//the line width from the joint point.
 	LineJoinBevel lineJoin = C.CAIRO_LINE_JOIN_BEVEL
 )
 
 //cairo_operator_t
 type op int
 
+//Originally cairo_operator_t.
 const (
 	OpClear op = C.CAIRO_OPERATOR_CLEAR
 
@@ -211,28 +379,49 @@ const (
 //cairo_path_data_type_t
 type pathDataType int
 
+//Originally cairo_path_data_type_t.
 const (
-	PathDataTypeMoveTo    pathDataType = C.CAIRO_PATH_MOVE_TO
-	PathDataTypeLineTo    pathDataType = C.CAIRO_PATH_LINE_TO
-	PathDataTypeCurveTo   pathDataType = C.CAIRO_PATH_CURVE_TO
-	PathDataTypeClosePath pathDataType = C.CAIRO_PATH_CLOSE_PATH
+	PathMoveTo    pathDataType = C.CAIRO_PATH_MOVE_TO
+	PathLineTo    pathDataType = C.CAIRO_PATH_LINE_TO
+	PathCurveTo   pathDataType = C.CAIRO_PATH_CURVE_TO
+	PathClosePath pathDataType = C.CAIRO_PATH_CLOSE_PATH
 )
 
 //cairo_pdf_version_t
 type pdfVersion int
 
+//The pdfVersion type describes the version number of the PDF specification
+//that a generated PDF file will conform to.
+//
+//Originally cairo_pdf_version_t.
 const (
+	//PDFVersion1_4 is the version 1.4 of the PDF specification.
 	PDFVersion1_4 pdfVersion = C.CAIRO_PDF_VERSION_1_4
+	//PDFVersion1_5 is the version 1.5 of the PDF specification.
 	PDFVersion1_5 pdfVersion = C.CAIRO_PDF_VERSION_1_5
 )
+
+func (p pdfVersion) String() string {
+	return C.GoString(C.cairo_pdf_version_to_string(C.cairo_pdf_version_t(p)))
+}
 
 //cairo_ps_level_t
 type psLevel int
 
+//The psLevel type is used to describe the version number of the PDF
+//specification that a generated PDF file will conform to.
+//
+//Since libcairo 1.6. Originally cairo_ps_level_t.
 const (
+	//PSLevel2 is the language level 2 of the PostScript specification.
 	PSLevel2 psLevel = C.CAIRO_PS_LEVEL_2
+	//PSLevel3 is the language level 3 of the PostScript specification.
 	PSLevel3 psLevel = C.CAIRO_PS_LEVEL_3
 )
+
+func (p psLevel) String() string {
+	return C.GoString(C.cairo_ps_level_to_string(C.cairo_ps_level_t(p)))
+}
 
 //cairo_status_t is handled in error.go
 //BUG(jmf): make this not a lie ^
@@ -240,6 +429,7 @@ const (
 //cairo_subpixel_order_t
 type subpixelOrder int
 
+//Originally cairo_subpixel_order_t.
 const (
 	SubpixelOrderDefault subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_DEFAULT
 	SubpixelOrderRGB     subpixelOrder = C.CAIRO_SUBPIXEL_ORDER_RGB
@@ -251,6 +441,7 @@ const (
 //cairo_surface_type_t
 type surfaceType int
 
+//Originally cairo_surface_type_t.
 const (
 	SurfaceTypeImage         surfaceType = C.CAIRO_SURFACE_TYPE_IMAGE
 	SurfaceTypePDF           surfaceType = C.CAIRO_SURFACE_TYPE_PDF
