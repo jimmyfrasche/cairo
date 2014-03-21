@@ -34,11 +34,11 @@ func (c *cairoDevice) Unlock() {
 }
 
 func (c *cairoDevice) Close() error {
-	if c == nil {
+	if c == nil || c.d == nil {
 		return nil
 	}
 	C.cairo_device_destroy(c.d)
-	c = nil
+	c.d = nil
 	return nil
 }
 
