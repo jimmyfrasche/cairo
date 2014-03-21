@@ -39,6 +39,7 @@ func (c *cairoDevice) Close() error {
 	}
 	C.cairo_device_destroy(c.d)
 	c.d = nil
+	runtime.SetFinalizer(c, nil)
 	return nil
 }
 

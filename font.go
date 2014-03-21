@@ -36,6 +36,7 @@ func (f FontOptions) Close() error {
 	}
 	C.cairo_font_options_destroy(f.fo)
 	f.fo = nil
+	runtime.SetFinalizer(f, nil)
 	return nil
 }
 
