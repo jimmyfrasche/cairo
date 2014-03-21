@@ -128,3 +128,99 @@ func (f FontOptions) SetHintMetrics(h hintMetrics) FontOptions {
 func (f FontOptions) HintMetrics() hintMetrics {
 	return hintMetrics(C.cairo_font_options_get_hint_metrics(f.fo))
 }
+
+//FontExtents stores metric information for a font.
+//Values are given in the current user-space coordinate system.
+//
+//Because font metrics are in user-space coordinates, they are mostly,
+//but not entirely, independent of the current transformation matrix.
+//They will, however, change slightly due to hinting but otherwise remain
+//unchanged.
+//
+//Originally cairo_font_extents_t.
+type FontExtents struct {
+	//Ascent is the distance the font extends above the baseline.
+	Ascent float64
+	//Descent is the distance the font extends below the baseline.
+	Descent float64
+	//Height is the recommended vertical distance between baselines
+	//when setting consecutive lines of text with the font.
+	Height float64
+	//MaxAdvanceX is the maximum distance in the X direction that
+	//the origin is advanced for any glyph in the font.
+	//
+	//Originally max_y_advance.
+	MaxAdvanceX float64
+	//MaxAdvanceY is the maximum distance in the Y direction that
+	//the origin is advanced for any glyph in the font.
+	//
+	//This will be zero for most fonts used for horizontal writing.
+	//
+	//Originally max_x_advance.
+	MaxAdvanceY float64
+}
+
+func newFontExtents(fe C.cairo_font_extents_t) FontExtents {
+	return FontExtents{
+		float64(fe.ascent),
+		float64(fe.descent),
+		float64(fe.height),
+		float64(fe.max_x_advance),
+		float64(fe.max_y_advance),
+	}
+}
+
+//ExternalLeading reports the difference between the Height and the sum
+//of the Ascent and Descent. Also known as "line spacing".
+func (f FontExtents) ExternalLeading() float64 {
+	return f.Height - (f.Ascent + f.Descent)
+}
+
+//TextExtents stores the extents of a single glyph or string of glyphs
+//in user-space coordinates.
+//Because text extents are in user-space coordinates, they are mostly,
+//but not entirely, independent of the current transformation matrix.
+//They will, however, change slightly due to hinting.
+//
+//Originally cairo_text_extents_t.
+type TextExtents struct {
+	//The horizontal distance from the origin to the leftmost part of the glyhps
+	//as drawn.
+	//Positive if the glyphs lie entirely to the right of the origin.
+	//
+	//Originally x_bearing.
+	BearingX float64
+	//The vertical distance from the origin to the topmost part of the glyhps
+	//as drawn.
+	//Positive if the glyphs lie entirely below the origin.
+	//
+	//Originally y_bearing
+	BearingY float64
+	//Width of the glyphs as drawn.
+	Width float64
+	//Height of the glyphs as drawn.
+	Height float64
+	//AdvanceX is the distance in the X direction to advance after drawing
+	//these glyphs.
+	//
+	//Originally x_advance.
+	AdvanceX float64
+	//AdvanceY is the distance in the Y direction to advance after drawing
+	//these glyphs.
+	//
+	//This will be zero for most fonts used for horizontal writing.
+	//
+	//Originally y_advance.
+	AdvanceY float64
+}
+
+func newTextExtents(te C.cairo_text_extents_t) TextExtents {
+	return TextExtents{
+		BearingX: float64(te.x_bearing),
+		BearingY: float64(te.y_bearing),
+		Width:    float64(te.width),
+		Height:   float64(te.height),
+		AdvanceX: float64(te.x_advance),
+		AdvanceY: float64(te.y_advance),
+	}
+}
