@@ -54,14 +54,14 @@ var (
 //TODO define common ones as Err* for user cmps
 )
 
-func st2str(st int) string {
-	return C.GoString(C.cairo_status_to_string(C.cairo_status_t(st)))
+func st2str(st C.cairo_status_t) string {
+	return C.GoString(C.cairo_status_to_string(st))
 }
 
 //BUG(jmf): return any of special ones defined in above TODO and handle conversion to io/os
 //errors for the file stuff
-func toerr(st int) error {
-	switch st {
+func toerr(st C.cairo_status_t) error {
+	switch int(st) {
 	case errSuccess:
 		return nil
 	case errInvalidRestore, errInvalidPopGroup, errNoCurrentPoint, errInvalidMatrix, errInvalidString, errSurfaceFinished:
