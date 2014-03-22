@@ -55,28 +55,23 @@ const (
 	AntialiasBest antialias = C.CAIRO_ANTIALIAS_BEST
 )
 
-//BUG(jmf): need to check cairo source to make sure the antialias String method isn't crazy.
-
 func (a antialias) String() string {
-	if a == AntialiasNone {
-		return "No antialiasing"
-	}
 	s := ""
-	switch {
-	case a&^AntialiasGray == 0:
-		s += "Gray "
-	case a&^AntialiasSubpixel == 0:
-		s += "Supixel "
+	switch a {
+	case AntialiasNone:
+		s = "No"
+	case AntialiasGray:
+		s = "Gray"
+	case AntialiasSubpixel:
+		s = "Supixel"
+	case AntialiasFast:
+		s = "Fast"
+	case AntialiasGood:
+		s = "Good"
+	case AntialiasBest:
+		s = "Best"
 	}
-	switch {
-	case a&^AntialiasFast == 0:
-		s += "Fast "
-	case a&^AntialiasGood == 0:
-		s += "Good "
-	case a&^AntialiasBest == 0:
-		s += "Best "
-	}
-	return s + "antialiasing"
+	return s + " antialiasing"
 }
 
 //cairo_content_t
