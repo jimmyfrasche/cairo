@@ -67,18 +67,18 @@ func (a AlphaColor) RGBA() (r, g, b, alpha uint32) {
 //
 //The conversion may be lossy.
 var (
-	ColorModel = func(c color.Color) color.Color {
+	ColorModel = color.ModelFunc(func(c color.Color) color.Color {
 		if c, ok := c.(Color); ok {
 			return c
 		}
 		r, g, b, _ := c.RGBA()
 		return Color{cto01(r), cto01(g), cto01(b)}
-	}
-	AlphaColorModel = func(c color.Color) color.Color {
+	})
+	AlphaColorModel = color.ModelFunc(func(c color.Color) color.Color {
 		if c, ok := c.(AlphaColor); ok {
 			return c
 		}
 		r, g, b, a := c.RGBA()
 		return AlphaColor{cto01(r), cto01(g), cto01(b), cto01(a)}
-	}
+	})
 )
