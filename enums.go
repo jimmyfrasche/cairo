@@ -90,6 +90,10 @@ const (
 	ContentColorAlpha content = C.CAIRO_CONTENT_COLOR_ALPHA
 )
 
+func (con content) c() C.cairo_content_t {
+	return C.cairo_content_t(con)
+}
+
 func (c content) String() string {
 	switch c {
 	case ContentColor:
@@ -416,6 +420,10 @@ const (
 	//of 8.
 	FormatRGB30 format = C.CAIRO_FORMAT_RGB30
 )
+
+func (f format) c() C.cairo_format_t {
+	return C.cairo_format_t(f)
+}
 
 func (f format) String() string {
 	var s string
