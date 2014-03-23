@@ -27,6 +27,12 @@ func NewFontOptions() FontOptions {
 	return fo
 }
 
+func initFontOptions(opt *C.cairo_font_options_t) FontOptions {
+	fo := FontOptions{opt}
+	runtime.SetFinalizer(fo, FontOptions.Close)
+	return fo
+}
+
 //Close destroys the FontOptions. Close is idempotent.
 //
 //Originally cairo_font_options_destroy.
@@ -223,4 +229,10 @@ func newTextExtents(te C.cairo_text_extents_t) TextExtents {
 		AdvanceX: float64(te.x_advance),
 		AdvanceY: float64(te.y_advance),
 	}
+}
+
+type Font interface {
+	Type() fontType
+	Close() error
+	Error() error
 }
