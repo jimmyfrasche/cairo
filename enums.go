@@ -3,7 +3,6 @@ package cairo
 //#cgo pkg-config: cairo
 //#include <cairo/cairo-pdf.h>
 //#include <cairo/cairo-ps.h>
-//#include <cairo/cairo-svg.h>
 import "C"
 
 //cairo_antialias_t
@@ -825,7 +824,11 @@ const (
 )
 
 func (p pdfVersion) String() string {
-	return C.GoString(C.cairo_pdf_version_to_string(C.cairo_pdf_version_t(p)))
+	v := C.cairo_pdf_version_to_string(C.cairo_pdf_version_t(p))
+	if v == nil {
+		return "unknown PDF version"
+	}
+	return C.GoString(v)
 }
 
 //cairo_ps_level_t
@@ -843,7 +846,11 @@ const (
 )
 
 func (p psLevel) String() string {
-	return C.GoString(C.cairo_ps_level_to_string(C.cairo_ps_level_t(p)))
+	v := C.cairo_ps_level_to_string(C.cairo_ps_level_t(p))
+	if v == nil {
+		return "unknown PS level"
+	}
+	return C.GoString(v)
 }
 
 //cairo_status_t is handled in error.go
