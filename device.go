@@ -3,7 +3,10 @@ package cairo
 //#cgo pkg-config: cairo
 //#include <cairo/cairo.h>
 import "C"
-import "runtime"
+
+import (
+	"runtime"
+)
 
 type Device interface {
 	Resource
