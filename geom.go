@@ -1,5 +1,7 @@
 package cairo
 
+import "C"
+
 import (
 	"math"
 	"strconv"
@@ -11,9 +13,19 @@ type Point struct {
 	X, Y float64
 }
 
+func (p Point) c() (x, y C.double) {
+	return C.double(p.X), C.double(p.Y)
+}
+
 //Pt is shorthand for Point{X, Y}.
 func Pt(X, Y float64) Point {
 	return Point{X, Y}
+}
+
+//Polar converts polar coordinates to cartesian.
+func Polar(r, θ float64) Point {
+	sinθ, cosθ := math.Sincos(θ)
+	return Pt(r*cosθ, r*sinθ)
 }
 
 //ZP is the zero point.
@@ -99,6 +111,12 @@ func (p Point) Mod(r Rectangle) Point {
 //for well-formed inputs.
 type Rectangle struct {
 	Min, Max Point
+}
+
+func (r Rectangle) c() (x0, y0, x1, y1 C.double) {
+	x0, y0 = r.Min.c()
+	x1, y1 = r.Max.c()
+	return
 }
 
 //ZR is the zero Rectangle.
