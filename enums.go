@@ -780,6 +780,52 @@ func (o op) String() string {
 	return s + " operation"
 }
 
+type patternType int
+
+//A patternType describes the type of a given pattern.
+//
+//Originally cairo_pattern_type_t
+const (
+	//PatternTypeSolid represents a uniform color, which may be opaque
+	//or translucent.
+	PatternTypeSolid = C.CAIRO_PATTERN_TYPE_SOLID
+	//PatternTypeSurface represents a pattern defined by a Surface.
+	PatternTypeSurface = C.CAIRO_PATTERN_TYPE_SURFACE
+	//PatternTypeLinear represents a pattern that is a linear gradient.
+	PatternTypeLinear = C.CAIRO_PATTERN_TYPE_LINEAR
+	//PatternTypeRadial represents a pattern that is a radial gradient.
+	PatternTypeRadial = C.CAIRO_PATTERN_TYPE_RADIAL
+	//PatternTypeMesh represents a pattern defined by a mesh.
+	PatternTypeMesh = C.CAIRO_PATTERN_TYPE_MESH
+	//PatternTypeRasterSource is a user pattern providing raster data.
+	PatternTypeRasterSource = C.CAIRO_PATTERN_TYPE_RASTER_SOURCE
+)
+
+func (p patternType) c() C.cairo_pattern_type_t {
+	return C.cairo_pattern_type_t(p)
+}
+
+func (p patternType) String() string {
+	s := ""
+	switch p {
+	case PatternTypeSolid:
+		s = "Solid"
+	case PatternTypeSurface:
+		s = "Surface"
+	case PatternTypeLinear:
+		s = "Linear gradient"
+	case PatternTypeRadial:
+		s = "Radial gradient"
+	case PatternTypeMesh:
+		s = "Mesh"
+	case PatternTypeRasterSource:
+		s = "Raster sourced"
+	default:
+		s = "unknown"
+	}
+	return s + " pattern"
+}
+
 //cairo_path_data_type_t
 type pathDataType int
 
