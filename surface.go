@@ -30,6 +30,10 @@ type Surface interface {
 	Type() surfaceType
 
 	HasShowTextGlyphs() bool
+
+	//ExtensionRaw is ONLY for adding libcairo subsystems outside this package.
+	//Otherwise just ignore.
+	ExtensionRaw() *C.cairo_surface_t
 }
 
 //BUG(jmf): Surface: how to handle map/unmap
@@ -77,7 +81,7 @@ type PagedVectorSurface interface {
 	VectorBacked
 }
 
-//ExtenstionSurface is the "base class" for cairo surfaces.
+//ExtensionSurface is the "base class" for cairo surfaces.
 //
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
