@@ -87,6 +87,11 @@ func (p Point) In(r Rectangle) bool {
 		p.Y < r.Max.Y
 }
 
+//InCirc reports whether p falls in c.
+func (p Point) InCirc(c Circle) bool {
+	return p.Near(c.Center, c.Radius)
+}
+
 //Mod returns the point q in r such that p.X-q.X is a multiple
 //of r's width and p.Y-q.Y is a multiple of r's height.
 func (p Point) Mod(r Rectangle) Point {
@@ -195,7 +200,7 @@ func (r Rectangle) Overlaps(s Rectangle) bool {
 		s.Min.Y < r.Max.Y
 }
 
-//In reports whether every potin in r is in s.
+//In reports whether every point in r is in s.
 func (r Rectangle) In(s Rectangle) bool {
 	if r.Empty() {
 		return true
@@ -219,5 +224,53 @@ func (r Rectangle) Canon() Rectangle {
 	return r
 }
 
+//A Circle contains the points swept out by Radius from Center.
+//
+//It is well-formed if the Radius is nonnegative.
+type Circle struct {
+	Center Point
+	Radius float64
+}
+
+//ZC is the zero circle.
+var ZC Circle
+
+//Circ is shorthand for Circle{c, r}.Canon().
+func Circ(c Point, r float64) Circle {
+	return Circle{c, r}.Canon()
+}
+
+func (c Circle) c() (x, y, r C.double) {
+	x, y = c.Center.c()
+	r = C.double(c.Radius)
+	return
+}
+
+func (c Circle) String() string {
+	return c.Center.String() + "-" + floatstr(c.Radius)
+}
+
+//Canon returns a canonical circle.
+func (c Circle) Canon() Circle {
+	return Circ(c.Center, math.Abs(c.Radius))
+}
+
+//Add returns the circle c translated by p.
+func (c Circle) Add(p Point) Circle {
+	return Circ(c.Center.Add(p), c.Radius)
+}
+
+//Sub returns the circle c translated by -p.
+func (c Circle) Sub(p Point) Circle {
+	return c.Add(Pt(-p.X, -p.Y))
+}
+
+//Empty reports whether this circle contains no points.
+func (c Circle) Empty() bool {
+	return c.Radius == 0
+}
+
 //BUG(jmf): finish copying image.Point/Rectangle interfaces over to float
 //and document. Just need Inset.
+
+//BUG(jmf): bring circle to feature parity with rectangle
