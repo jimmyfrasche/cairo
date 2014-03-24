@@ -22,6 +22,10 @@ func Pt(X, Y float64) Point {
 	return Point{X, Y}
 }
 
+func cPt(x, y C.double) Point {
+	return Point{float64(x), float64(y)}
+}
+
 //Polar converts polar coordinates to cartesian.
 func Polar(r, θ float64) Point {
 	sinθ, cosθ := math.Sincos(θ)
@@ -138,6 +142,10 @@ func Rect(x0, y0, x1, y1 float64) Rectangle {
 	return Rectangle{Pt(x0, y0), Pt(x1, y1)}
 }
 
+func cRect(x0, y0, x1, y1 C.double) Rectangle {
+	return Rectangle{cPt(x0, y0), cPt(x1, y1)}.Canon()
+}
+
 func (r Rectangle) String() string {
 	return r.Min.String() + "-" + r.Max.String()
 }
@@ -235,9 +243,13 @@ type Circle struct {
 //ZC is the zero circle.
 var ZC Circle
 
-//Circ is shorthand for Circle{c, r}.Canon().
-func Circ(c Point, r float64) Circle {
-	return Circle{c, r}.Canon()
+//Circ is shorthand for Circle{Pt(x, y), r}.Canon().
+func Circ(x, y, r float64) Circle {
+	return Circle{Pt(x, y), r}.Canon()
+}
+
+func cCirc(x, y, r C.double) Circle {
+	return Circle{cPt(x, y), float64(r)}.Canon()
 }
 
 func (c Circle) c() (x, y, r C.double) {
@@ -252,12 +264,12 @@ func (c Circle) String() string {
 
 //Canon returns a canonical circle.
 func (c Circle) Canon() Circle {
-	return Circ(c.Center, math.Abs(c.Radius))
+	return Circ(c.Center.X, c.Center.Y, math.Abs(c.Radius))
 }
 
 //Add returns the circle c translated by p.
 func (c Circle) Add(p Point) Circle {
-	return Circ(c.Center.Add(p), c.Radius)
+	return Circle{c.Center.Add(p), c.Radius}
 }
 
 //Sub returns the circle c translated by -p.

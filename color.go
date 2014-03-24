@@ -50,6 +50,15 @@ type AlphaColor struct {
 	R, G, B, A float64
 }
 
+func cColor(r, g, b, a C.double) AlphaColor {
+	return AlphaColor{
+		float64(r),
+		float64(g),
+		float64(b),
+		float64(a),
+	}
+}
+
 //Canon returns a new color with all values clamped to [0,1].
 func (a AlphaColor) Canon() AlphaColor {
 	return AlphaColor{clamp01(a.R), clamp01(a.G), clamp01(a.B), clamp01(a.A)}
