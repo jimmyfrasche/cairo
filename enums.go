@@ -197,6 +197,10 @@ const (
 	ExtendPad extend = C.CAIRO_EXTEND_PAD
 )
 
+func (e extend) c() C.cairo_extend_t {
+	return C.cairo_extend_t(e)
+}
+
 func (e extend) String() string {
 	var s string
 	switch e {
@@ -283,6 +287,10 @@ const (
 	//FilterBilinear uses linear interpolation in two dimensions.
 	FilterBilinear filter = C.CAIRO_FILTER_BILINEAR
 )
+
+func (f filter) c() C.cairo_filter_t {
+	return C.cairo_filter_t(f)
+}
 
 func (f filter) String() string {
 	var s string
