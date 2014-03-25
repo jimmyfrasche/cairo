@@ -20,7 +20,6 @@ import (
 //Originally cairo_svg_surface_t.
 type Surface struct {
 	cairo.ExtensionVectorSurface
-	width, height float64
 	//w is used in NewWriter to ensure a reference to the writer lives as long as we do
 	w io.Writer
 }
@@ -36,8 +35,6 @@ func NewFile(filename string, width, height float64) (Surface, error) {
 	svg := C.cairo_svg_surface_create(nm, C.double(width), C.double(height))
 	s := Surface{
 		ExtensionVectorSurface: cairo.ExtensionNewVectorSurface(svg),
-		width:  width,
-		height: height,
 	}
 	return s, s.Err()
 }
@@ -58,11 +55,22 @@ func New(w io.Writer, width, height float64) (Surface, error) {
 	svg := C.cairo_svg_surface_create_for_stream(cairo.ExtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	s := Surface{
 		ExtensionVectorSurface: cairo.ExtensionNewVectorSurface(svg),
-		width:  width,
-		height: height,
-		w:      w,
+		w: w,
 	}
 	return s, s.Err()
+}
+
+func cNew(s *C.cairo_surface_t) (cairo.Surface, error) {
+	//Note that if the surface was created with an io.Writer we have no way of
+	//getting it here but that's okay as long as the original reference lives on.
+	S := Surface{
+		ExtensionVectorSurface: cairo.ExtensionNewVectorSurface(s),
+	}
+	return S, S.Err()
+}
+
+func init() {
+	cairo.ExtensionRegisterRawToSurface(cairo.SurfaceTypeSVG, cNew)
 }
 
 //BUG(jmf): add documentation about mime type to New after I figure out what that entails.
@@ -75,14 +83,4 @@ func New(w io.Writer, width, height float64) (Surface, error) {
 func (s Surface) RestrictTo(v version) error {
 	C.cairo_svg_surface_restrict_to_version(s.ExtensionRaw(), v.c())
 	return s.Err()
-}
-
-//Width reports the width of the surface in typographical points.
-func (s Surface) Width() float64 {
-	return s.width
-}
-
-//Height reports the height of the surface in typographical points.
-func (s Surface) Height() float64 {
-	return s.height
 }

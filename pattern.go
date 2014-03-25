@@ -3,10 +3,34 @@ package cairo
 //#cgo pkg-config: cairo
 //#include <cairo/cairo.h>
 import "C"
+
 import (
+	"errors"
 	"image/color"
 	"runtime"
 )
+
+func getPatternType(p *C.cairo_pattern_t) patternType {
+	return patternType(C.cairo_pattern_get_type(p))
+}
+
+func cPattern(p *C.cairo_pattern_t) (Pattern, error) {
+	switch getPatternType(p) {
+	case PatternTypeSolid:
+		return cNewSolidPattern(p), nil
+	case PatternTypeSurface:
+		return cNewSurfacePattern(p)
+	case PatternTypeLinear:
+		return cNewLinearGradient(p), nil
+	case PatternTypeRadial:
+		return cNewRadialGradient(p), nil
+	case PatternTypeMesh:
+		return cNewMesh(p), nil
+	case PatternTypeRasterSource:
+		return nil, errors.New("unimplemented pattern type") //TODO: make wrong
+	}
+	return nil, errors.New("unimplemented pattern type")
+}
 
 //Pattern is a pattern used for drawing.
 //
@@ -38,7 +62,7 @@ func newPattern(p *C.cairo_pattern_t) *pattern {
 //
 //Originally cairo_pattern_get_type.
 func (p *pattern) Type() patternType {
-	return patternType(C.cairo_pattern_get_type(p.p))
+	return getPatternType(p.p)
 }
 
 //Err reports any error on this pattern.
@@ -137,6 +161,15 @@ func NewSolidPattern(c color.Color) SolidPattern {
 	}
 }
 
+func cNewSolidPattern(p *C.cairo_pattern_t) Pattern {
+	var r, g, b, a C.double
+	C.cairo_pattern_get_rgba(p, &r, &g, &b, &a)
+	return SolidPattern{
+		pattern: newPattern(p),
+		c:       cColor(r, g, b, a),
+	}
+}
+
 //Color returns the color this pattern was created with.
 //
 //Originally cairo_pattern_get_rgba.
@@ -168,6 +201,21 @@ func NewSurfacePattern(s Surface) (sp SurfacePattern, err error) {
 
 //BUG(jmf): (potentially) assuming pattern returned by cairo_pattern_create_for_surface
 //is the same as the pattern put into it. If this is not true, things could get messy.
+
+func cNewSurfacePattern(p *C.cairo_pattern_t) (Pattern, error) {
+	var s *C.cairo_surface_t
+	C.cairo_pattern_get_surface(p, &s)
+	C.cairo_surface_reference(s) //returned surface does not up libcairo refcount
+	S, err := cSurface(p)
+	if err != nil {
+		return nil, err
+	}
+	P := SurfacePattern{
+		pattern: newPattern(p),
+		s:       S,
+	}
+	return P, nil
+}
 
 //Surface returns the Surface of this Pattern.
 //
@@ -252,6 +300,18 @@ func NewLinearGradient(start, end Point) LinearGradient {
 	}
 }
 
+func cNewLinearGradient(p *C.cairo_pattern_t) Pattern {
+	var x0, y0, x1, y1 C.double
+	C.cairo_pattern_get_linear_points(p, &x0, &y0, &x1, &y1)
+	return LinearGradient{
+		patternGradient: patternGradient{
+			pattern: newPattern(p),
+		},
+		start: cPt(x0, y0),
+		end:   cPt(x1, y1),
+	}
+}
+
 //Line returns the start and end points of this linear gradient.
 //
 //Originally cairo_pattern_get_linear_points.
@@ -279,6 +339,18 @@ func NewRadialGradient(start, end Circle) RadialGradient {
 		},
 		start: start,
 		end:   end,
+	}
+}
+
+func cNewRadialGradient(p *C.cairo_pattern_t) Pattern {
+	var x0, y0, r0, x1, y1, r1 C.double
+	C.cairo_pattern_get_radial_circles(p, &x0, &y0, &r0, &x1, &y1, &r1)
+	return RadialGradient{
+		patternGradient: patternGradient{
+			pattern: newPattern(p),
+		},
+		start: cCirc(x0, y0, r0),
+		end:   cCirc(x0, y0, r0),
 	}
 }
 
@@ -418,6 +490,10 @@ type Mesh struct {
 //Originally cairo_pattern_create_mesh.
 func NewMesh() Mesh {
 	p := C.cairo_pattern_create_mesh()
+	return cNewMesh(p)
+}
+
+func cNewMesh(p *C.cairo_pattern_t) Mesh {
 	return Mesh{
 		pattern: newPattern(p),
 	}

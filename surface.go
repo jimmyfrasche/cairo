@@ -4,6 +4,37 @@ package cairo
 //#include <cairo/cairo.h>
 import "C"
 
+var csurftogosurf = map[surfaceType]func(*C.cairo_surface_t) (Surface, error){
+	SurfaceTypeImage: cNewImageSurface,
+}
+
+//ExtensionRegisterRawToSurface registers a factory to convert a libcairo
+//surface into a properly formed cairo Surface of the appropriate type.
+//
+//It is mandatory for extensions defining new surface types to call this
+//function during init, otherwise users will get random not implemented
+//panics for your surface.
+func ExtensionRegisterRawToSurface(t surfaceType, f func(*C.cairo_surface_t) (Surface, error)) {
+	csurftogosurf[t] = f
+}
+
+func cSurface(s *C.cairo_surface_t) (Surface, error) {
+	t := surfaceType(C.cairo_surface_get_type(s))
+	f, ok := csurftogosurf[t]
+	if !ok {
+		panic("No C → Go surface converter registered for " + t.String())
+	}
+	P, err := f(s)
+	if err != nil {
+		return nil, err
+	}
+	err = P.Err()
+	if err != nil {
+		return nil, err
+	}
+	return P, nil
+}
+
 //Surface represents an image, either as the destination of a drawing
 //operation or as the source when drawing onto another surface.
 //
