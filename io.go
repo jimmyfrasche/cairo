@@ -11,6 +11,7 @@ package cairo
 //
 //typedef cairo_status_t (*callback_pass_back)(void*, unsigned char*, unsigned int);
 //
+///*This is required to expose the c callback wrapping the go callback back to Go*/
 //static callback_pass_back callback_getter() {
 //	return &c_write_callback;
 //}
