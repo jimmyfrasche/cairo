@@ -51,11 +51,17 @@ const (
 )
 
 var (
-//TODO define common ones as Err* for user cmps
+	//TODO define common ones as Err* for user cmps
+
+	ErrInvalidPathData = mkerr(errInvalidPathData)
 )
 
 func st2str(st C.cairo_status_t) string {
 	return C.GoString(C.cairo_status_to_string(st))
+}
+
+func mkerr(st C.cairo_status_t) error {
+	return errors.New(st2str(st))
 }
 
 //BUG(jmf): return any of special ones defined in above TODO and handle conversion to io/os
@@ -66,7 +72,8 @@ func toerr(st C.cairo_status_t) error {
 		return nil
 	case errInvalidRestore, errInvalidPopGroup, errNoCurrentPoint, errInvalidMatrix, errInvalidString, errSurfaceFinished:
 		panic(st2str(st))
-
+	case errInvalidPathData:
+		return ErrInvalidPathData
 	}
 	return errors.New(st2str(st))
 }
