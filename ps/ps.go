@@ -131,8 +131,6 @@ func NewFile(filename string, width, height float64, eps bool, header, setup Com
 	return news(ps, eps)
 }
 
-//BUG(jmf): filename's CString not freed. Does cairo take control of it or strdup it?
-
 //RestrictTo restricts the generated PostScript to the specified level.
 //
 //This method should only be called before any drawing operations have been
