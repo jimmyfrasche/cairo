@@ -2,7 +2,6 @@ package cairo
 
 //#cgo pkg-config: cairo
 //#include <cairo/cairo-pdf.h>
-//#include <cairo/cairo-ps.h>
 import "C"
 
 //cairo_antialias_t
@@ -907,28 +906,6 @@ func (p pdfVersion) String() string {
 	v := C.cairo_pdf_version_to_string(C.cairo_pdf_version_t(p))
 	if v == nil {
 		return "unknown PDF version"
-	}
-	return C.GoString(v)
-}
-
-//cairo_ps_level_t
-type psLevel int
-
-//The psLevel type is used to describe the version number of the PDF
-//specification that a generated PDF file will conform to.
-//
-//Since libcairo 1.6. Originally cairo_ps_level_t.
-const (
-	//PSLevel2 is the language level 2 of the PostScript specification.
-	PSLevel2 psLevel = C.CAIRO_PS_LEVEL_2
-	//PSLevel3 is the language level 3 of the PostScript specification.
-	PSLevel3 psLevel = C.CAIRO_PS_LEVEL_3
-)
-
-func (p psLevel) String() string {
-	v := C.cairo_ps_level_to_string(C.cairo_ps_level_t(p))
-	if v == nil {
-		return "unknown PS level"
 	}
 	return C.GoString(v)
 }
