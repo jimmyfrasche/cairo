@@ -857,8 +857,6 @@ func (p patternType) String() string {
 //cairo_path_data_type_t
 type pathDataType int
 
-//BUG(jmf): Make sure that cairo_path_t is named Path
-
 //A pathDataType is used to describe the type of one portion of a path
 //when represented as a Path.
 //
