@@ -46,6 +46,8 @@ type Pattern interface {
 	Filter() filter
 	SetMatrix(Matrix)
 	Matrix() Matrix
+
+	c() *C.cairo_pattern_t
 }
 
 type pattern struct {
@@ -56,6 +58,10 @@ func newPattern(p *C.cairo_pattern_t) *pattern {
 	P := &pattern{p}
 	runtime.SetFinalizer(p, (*pattern).Close)
 	return P
+}
+
+func (p *pattern) c() *C.cairo_pattern_t {
+	return p.p
 }
 
 //Type returns the type of the pattern.
@@ -145,19 +151,19 @@ func (p pattern) Matrix() Matrix {
 //SolidPattern is a Pattern corresponding to a single translucent color.
 type SolidPattern struct {
 	*pattern
-	c AlphaColor
+	col AlphaColor
 }
 
 //NewSolidPattern creates a solid pattern of color c.
 //
 //Originally cairo_pattern_create_rgba.
 func NewSolidPattern(c color.Color) SolidPattern {
-	col := AlphaColorModel.Convert(c).(AlphaColor).Canon()
+	col := colorToAlpha(c)
 	r, g, b, a := col.c()
 	p := C.cairo_pattern_create_rgba(r, g, b, a)
 	return SolidPattern{
 		pattern: newPattern(p),
-		c:       col,
+		col:     col,
 	}
 }
 
@@ -166,7 +172,7 @@ func cNewSolidPattern(p *C.cairo_pattern_t) Pattern {
 	C.cairo_pattern_get_rgba(p, &r, &g, &b, &a)
 	return SolidPattern{
 		pattern: newPattern(p),
-		c:       cColor(r, g, b, a),
+		col:     cColor(r, g, b, a),
 	}
 }
 
@@ -174,7 +180,7 @@ func cNewSolidPattern(p *C.cairo_pattern_t) Pattern {
 //
 //Originally cairo_pattern_get_rgba.
 func (s SolidPattern) Color() AlphaColor {
-	return s.c
+	return s.col
 }
 
 //SurfacePattern is a Pattern backed by a Surface.
@@ -249,8 +255,7 @@ type patternGradient struct {
 //Originally cairo_pattern_add_color_stop_rgba.
 func (p patternGradient) AddColorStop(offset float64, c color.Color) {
 	o := C.double(clamp01(offset))
-	col := AlphaColorModel.Convert(c).(AlphaColor).Canon()
-	r, g, b, a := col.c()
+	r, g, b, a := colorToAlpha(c).c()
 	C.cairo_pattern_add_color_stop_rgba(p.p, o, r, g, b, a)
 }
 
@@ -576,8 +581,7 @@ func (m Mesh) SetControlPoint(whichPoint int, p Point) Mesh {
 //Originally cairo_mesh_pattern_set_corner_color_rgba.
 func (m Mesh) SetCornerColor(whichCorner int, c color.Color) Mesh {
 	wc := clampMeshPoint(whichCorner)
-	c = AlphaColorModel.Convert(c).(AlphaColor).Canon()
-	r, g, b, a := c.(AlphaColor).c()
+	r, g, b, a := colorToAlpha(c).c()
 	C.cairo_mesh_pattern_set_corner_color_rgba(m.p, wc, r, g, b, a)
 	return m
 }
@@ -591,9 +595,13 @@ func (m Mesh) Patches() int {
 	return int(pc)
 }
 
-//BUG(jmf): not implemented, do not have path type yet.
+//Path gets path defining patch whichPatch.
+//
 //Originally cairo_mesh_pattern_get_path.
-func (m Mesh) Path(whichPatch int) { //TODO need path type
+func (m Mesh) Path(whichPatch int) (Path, error) {
+	p := C.cairo_mesh_pattern_get_path(m.p, C.uint(whichPatch))
+	defer C.cairo_path_destroy(p)
+	return cPath(p)
 }
 
 //BUG(jmf): cairo_mesh_patten_get_control_point. Do not understand doc:
