@@ -1,7 +1,6 @@
 package svg
 
 //#cgo pkg-config: cairo
-//#include <stdlib.h>
 //#include <cairo/cairo.h>
 //#include <cairo/cairo-svg.h>
 import "C"
@@ -41,12 +40,12 @@ func Versions() (versions []version) {
 	var N C.int
 
 	C.cairo_svg_get_versions(&vs, &N)
-	defer C.free(unsafe.Pointer(vs))
 
 	n := int(N)
+	versions = make([]version, n)
 	pseudoslice := (*[1 << 30]C.cairo_svg_version_t)(unsafe.Pointer(vs))[:n:n]
-	for _, v := range pseudoslice {
-		versions = append(versions, version(v))
+	for i, v := range pseudoslice {
+		versions[i] = version(v)
 	}
 
 	return
