@@ -54,6 +54,7 @@ var (
 	//TODO define common ones as Err* for user cmps
 
 	ErrInvalidPathData = mkerr(errInvalidPathData)
+	ErrInvalidDash     = mkerr(errInvalidDash)
 )
 
 func st2str(st C.cairo_status_t) string {
@@ -74,6 +75,8 @@ func toerr(st C.cairo_status_t) error {
 		panic(st2str(st))
 	case errInvalidPathData:
 		return ErrInvalidPathData
+	case errInvalidDash:
+		return ErrInvalidDash
 	}
 	return errors.New(st2str(st))
 }
