@@ -1,7 +1,7 @@
 package cairo
 
 //#cgo pkg-config: cairo
-//#include <cairo/cairo-pdf.h>
+//#include <cairo/cairo.h>
 import "C"
 
 //cairo_antialias_t
@@ -886,28 +886,6 @@ func (p pathDataType) String() string {
 		return "unknown path operation"
 	}
 	return "A path" + s + " operation"
-}
-
-//cairo_pdf_version_t
-type pdfVersion int
-
-//The pdfVersion type describes the version number of the PDF specification
-//that a generated PDF file will conform to.
-//
-//Originally cairo_pdf_version_t.
-const (
-	//PDFVersion1_4 is the version 1.4 of the PDF specification.
-	PDFVersion1_4 pdfVersion = C.CAIRO_PDF_VERSION_1_4
-	//PDFVersion1_5 is the version 1.5 of the PDF specification.
-	PDFVersion1_5 pdfVersion = C.CAIRO_PDF_VERSION_1_5
-)
-
-func (p pdfVersion) String() string {
-	v := C.cairo_pdf_version_to_string(C.cairo_pdf_version_t(p))
-	if v == nil {
-		return "unknown PDF version"
-	}
-	return C.GoString(v)
 }
 
 //cairo_status_t is handled in error.go
