@@ -54,6 +54,10 @@ const (
 	AntialiasBest antialias = C.CAIRO_ANTIALIAS_BEST
 )
 
+func (a antialias) c() C.cairo_antialias_t {
+	return C.cairo_antialias_t(a)
+}
+
 func (a antialias) String() string {
 	s := ""
 	switch a {
@@ -248,6 +252,10 @@ const (
 	//If the total number of intersections is odd, the point will be filled.
 	FillRuleEvenOdd fillRule = C.CAIRO_FILL_RULE_EVEN_ODD
 )
+
+func (f fillRule) c() C.cairo_fill_rule_t {
+	return C.cairo_fill_rule_t(f)
+}
 
 func (f fillRule) String() string {
 	switch f {
@@ -551,6 +559,10 @@ const (
 	LineCapSquare lineCap = C.CAIRO_LINE_CAP_SQUARE
 )
 
+func (l lineCap) c() C.cairo_line_cap_t {
+	return C.cairo_line_cap_t(l)
+}
+
 func (l lineCap) String() string {
 	s := ""
 	switch l {
@@ -582,6 +594,10 @@ const (
 	//the line width from the joint point.
 	LineJoinBevel lineJoin = C.CAIRO_LINE_JOIN_BEVEL
 )
+
+func (l lineJoin) c() C.cairo_line_join_t {
+	return C.cairo_line_join_t(l)
+}
 
 func (l lineJoin) String() string {
 	s := ""
@@ -720,6 +736,10 @@ const (
 	//This produces an inverse effect to OpColorHSL.
 	OpLuminosityHSL op = C.CAIRO_OPERATOR_HSL_LUMINOSITY
 )
+
+func (o op) c() C.cairo_operator_t {
+	return C.cairo_operator_t(o)
+}
 
 func (o op) String() string {
 	s := ""
