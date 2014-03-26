@@ -4,11 +4,12 @@ package pdf
 //#include <cairo/cairo.h>
 //#include <cairo/cairo-pdf.h>
 import "C"
-import
+
+import (
+	"unsafe"
+)
 
 //cairo_pdf_version_t
-"unsafe"
-
 type version int
 
 //The version type describes the version number of the PDF specification
