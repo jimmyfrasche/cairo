@@ -142,8 +142,21 @@ func Rect(x0, y0, x1, y1 float64) Rectangle {
 	return Rectangle{Pt(x0, y0), Pt(x1, y1)}
 }
 
+//RectWH is shorthand for Rectangle{Pt(x, y), Pt(x+width, y+height)}.Canon().
+func RectWH(x, y, width, height float64) Rectangle {
+	return Rect(x, y, x+width, y+height)
+}
+
 func cRect(x0, y0, x1, y1 C.double) Rectangle {
 	return Rectangle{cPt(x0, y0), cPt(x1, y1)}.Canon()
+}
+
+//like c but returns Min (Dx, Dy)
+func (r Rectangle) cWH() (x, y, w, h C.double) {
+	x, y = r.Min.c()
+	w = C.double(r.Dx())
+	h = C.double(r.Dy())
+	return
 }
 
 func (r Rectangle) String() string {
