@@ -1,6 +1,7 @@
 package cairo
 
 //#cgo pkg-config: cairo
+//#include <stdlib.h>
 //#include <cairo/cairo.h>
 import "C"
 
@@ -822,5 +823,347 @@ func (c *Context) CopyPage() *Context {
 //Originally cairo_show_page.
 func (c *Context) ShowPage() *Context {
 	C.cairo_show_page(c.c)
+	return c
+}
+
+//CopyPath returns a copy of the current path.
+//
+//Originally cairo_copy_path.
+func (c *Context) CopyPath() (Path, error) {
+	p := C.cairo_copy_path(c.c)
+	defer C.cairo_path_destroy(p)
+	return cPath(p)
+}
+
+//CopyPathFlat returns a linearized copy of the current path.
+//
+//CopyPathFlat behaves like CopyPath except that any curves in the path will be
+//approximated with piecewise-linear approximations, accurate to within the
+//current tolerance value.
+//That is, the result is guaranteed to not have any elements of type PathCurveTo
+//which will instead be replaced by a series of PathLineTo elements.
+//
+//Originally cairo_copy_path_flat.
+func (c *Context) CopyPathFlat() (Path, error) {
+	p := C.cairo_copy_path_flat(c.c)
+	defer C.cairo_path_destroy(p)
+	return cPath(p)
+}
+
+//AppendPath appends path onto the current path of c.
+//
+//Originally cairo_append_path.
+func (c *Context) AppendPath(path Path) error {
+	p, err := path.c()
+	if err != nil {
+		return err
+	}
+	C.cairo_append_path(c.c, p)
+	C.cairo_path_destroy(p) //BUG(jmf): does cairo take control of path after append path?
+	return c.Err()
+}
+
+//CurrentPoint reports the current point of the current path.
+//The current point is, conceptually, the final point reached by the path
+//so far.
+//
+//The current point is returned in the user-space coordinate system.
+//
+//If there is no defined current point, or if c is in an error state,
+//(ZP, false) will be returned.
+//Otherwise the (cp, true) will be returned where cp is the current point.
+//
+//Most path constructions alter the current point.
+//
+//Some functions use and alter the current point, but do not otherwise change
+//the current path, see ShowText.
+//
+//Some functions unset the current path, and, as a result, the current point,
+//such as Fill.
+//
+//Originally cairo_has_current_point and cairo_get_current_point.
+func (c *Context) CurrentPoint() (cp Point, defined bool) {
+	has := C.cairo_has_current_point(c.c) == 1
+	if !has {
+		return
+	}
+	var x, y C.double
+	C.cairo_get_current_point(c.c, &x, &y)
+	return cPt(x, y), true
+}
+
+//NewPath clears the current path and, by extension, the current point.
+//
+//Originally cairo_new_path.
+func (c *Context) NewPath() *Context {
+	C.cairo_new_path(c.c)
+	return c
+}
+
+//NewSubPath begins a new sub-path.
+//The existing path is not affected, but the current point is cleared.
+//
+//In many cases, this is not needed since new sub-paths are frequently started
+//with MoveTo.
+//
+//NewSubPath is particularly useful when beginning a new sub-path with one of the
+//Arc calls, as, in this case, it is no longer necessary to manually computer the
+//arc's inital coordinates for use with MoveTo.
+//
+//Originally cairo_new_sub_path.
+func (c *Context) NewSubPath() *Context {
+	C.cairo_new_sub_path(c.c)
+	return c
+}
+
+//ClosePath adds a line segment from the current point to the beginning
+//of the current sub-path and closes the sub-path.
+//After this call the current point will be at the joined endpoint of the
+//sub-path.
+//
+//The behavior of ClosePath is distinct from simply calling LineTo with the
+//equivalent coordinate in the case of stroking.
+//When a closed sub-path is stroked, there are no caps on the ends of the
+//sub-path.
+//Instead, there is a line join connecting the final and initial segments
+//of the sub-path.
+//
+//If there is no current point, this method will have no effect.
+//
+//ClosePath will place an explicit PathMoveTo following the PathClosePath into
+//the current path.
+func (c *Context) ClosePath() *Context {
+	C.cairo_close_path(c.c)
+	return c
+}
+
+//Arc adds a circular arc along the surface of circle from fromAngle
+//increasing to toAngle.
+//
+//If fromAngle < toAngle, then toAngle will be increased by 2π until
+//fromAngle > toAngle.
+//
+//If there is a current point, an initial line segment will be added
+//to the path to connect the current point to the beginning of the arc.
+//If this initial line is undesired, call ClosePath before Arc.
+//
+//Angles are measured in radians.
+//An angle of 0 is in the direction of the positive X axis in user space.
+//An angle of π/2 radians (90°) is in the direction of the positive Y axis
+//in user space.
+//With the default transformation matrix, angles increase clockwise.
+//
+//To convert from degrees to radians use
+//	degrees * π/180
+//
+//Arc gives the arc in the direction of increasing angles.
+//Use ArcNegative to get the arc in the direction of decreasing
+//angles.
+//
+//The arc is circular in user space.
+//To achieve an elliptical arc, you can scale the current transformation
+//matrix by different amounts in the X and Y directions.
+//
+//For example, to draw an ellipse in the box given by x, y, width, height:
+//	c.SaveRestore(func(c *Context) error {
+//		c.Translate(x + width/2, y + width/2).
+//			Scale(width/2, height/2).
+//			Arc(Circle(ZP, 1), 0, 2*math.Pi)
+//		return nil
+//	})
+//
+//Originally cairo_arc.
+func (c *Context) Arc(circle Circle, fromAngle, toAngle float64) *Context {
+	x, y, r := circle.c()
+	a1, a2 := C.double(fromAngle), C.double(toAngle)
+	C.cairo_arc(c.c, x, y, r, a1, a2)
+	return c
+}
+
+//Arc adds a circular arc along the surface of circle from fromAngle
+//decreasing to toAngle.
+//
+//If fromAngle > toAngle, then toAngle will be dereased by 2π until
+//fromAngle < toAngle.
+//
+//ArcNegative gives the arc in the direction of decreasing angles.
+//Use Arc to get the arc in the direction of increasing angles.
+//
+//Originally cairo_arc_negative.
+func (c *Context) ArcNegative(circle Circle, fromAngle, toAngle float64) *Context {
+	x, y, r := circle.c()
+	a1, a2 := C.double(fromAngle), C.double(toAngle)
+	C.cairo_arc(c.c, x, y, r, a1, a2)
+	return c
+}
+
+//CurveTo adds a cubic Bézier spline to the path from the current point to p3
+//in user space coordinates, using p1 and p2 as the control points.
+//After calling CurveTo, the current point will be p3.
+//
+//If there is no current point, CurveTo will behave as if preceded by a call
+//to MoveTo(p1)
+//
+//Originally cairo_curve_to.
+func (c *Context) CurveTo(p1, p2, p3 Point) *Context {
+	x0, y0 := p1.c()
+	x1, y1 := p2.c()
+	x2, y2 := p3.c()
+	C.cairo_curve_to(c.c, x0, y0, x1, y1, x2, y2)
+	return c
+}
+
+//LineTo adds a line to the path from the current point to p in user space
+//coordinates.
+//
+//If there is no current point, LineTo will behave as if preceded by a call
+//to MoveTo(p)
+//
+//Originally cairo_line_to.
+func (c *Context) LineTo(p Point) *Context {
+	x, y := p.c()
+	C.cairo_line_to(c.c, x, y)
+	return c
+}
+
+//MoveTo begins a new sub-path and sets the current point to p.
+//
+//Originally cairo_move_to.
+func (c *Context) MoveTo(p Point) *Context {
+	x, y := p.c()
+	C.cairo_move_to(c.c, x, y)
+	return c
+}
+
+//Rectangle adds a closed sub-path rectangle to the current path at position
+//r.Min in user-space coordinates.
+//
+//This function is logically equivalent to:
+//	c.MoveTo(r.Min)
+//	c.LineTo(Pt(r.Dx(), 0))
+//	c.LineTo(Pt(0, r.Dy()))
+//	c.LineTo(Pt(-r.Dx(), 0))
+//	c.ClosePath()
+//
+//Originally cairo_rectangle.
+func (c *Context) Rectangle(r Rectangle) *Context {
+	x, y, w, h := r.cWH()
+	C.cairo_rectangle(c.c, x, y, w, h)
+	return c
+}
+
+//RelCurveTo is a relative-coordinate version of CurveTo.
+//All points are considered as vectors with an origin at the current point.
+//
+//It is equivalent to
+//	if p, ok := c.CurrentPoint(); ok {
+//		c.CurveTo(p.Add(v1), p.Add(v2), p.Add(v3))
+//	} else {
+//		// c is broken now
+//	}
+//
+//Originally cairo_rel_curve_to.
+func (c *Context) RelCurveTo(v1, v2, v3 Point) error {
+	x0, y0 := v1.c()
+	x1, y1 := v2.c()
+	x2, y2 := v3.c()
+	C.cairo_rel_curve_to(c.c, x0, y0, x1, y1, x2, y2)
+	return c.Err()
+}
+
+//RelLineTo is a relative-coordinate version of LineTo.
+//The point v is considered a vector with the origin at the current point.
+//
+//It is equivalent to
+//	if p, ok := c.CurrentPoint(); ok {
+//		c.LineTo(p.Add(v))
+//	} else {
+//		// c is broken now
+//	}
+//
+//Originally cairo_rel_line_to.
+func (c *Context) RelLineTo(v Point) error {
+	x, y := v.c()
+	C.cairo_rel_line_to(c.c, x, y)
+	return c.Err()
+}
+
+//RelMoveTo begins a new sub-path.
+//After this call the current point will be offset by v.
+//
+//It is equivalent to
+//	if p, ok := c.CurrentPoint(); ok {
+//		c.Move(p.Add(v))
+//	} else {
+//		// c is broken now
+//	}
+//
+//Originally cairo_rel_move_to.
+func (c *Context) RelMoveTo(v Point) error {
+	x, y := v.c()
+	C.cairo_rel_move_to(c.c, x, y)
+	return c.Err()
+}
+
+//PathExtents computes a bounding box in user-space coordinates covering
+//the points on the current path.
+//If the current path is empty, returns ZR.
+//Stroke parameters, fill rule, surface dimensions and clipping are not taken
+//into account.
+//
+//PathExtents is in contrast to FillExtents and StrokeExtents which return
+//the extents of only the area that would be "inked" by the corresponding
+//drawing operations.
+//
+//The result of PathExtents is defined as equivalent to the limit
+//of StrokeExtents with LineCapRound as the line width approaches 0, but never
+//approaching the empty rectangle returned by StrokeExtents for a line width
+//of 0.
+//
+//Specifically, this means that zero-area sub-paths such as MoveTo contribute
+//to the extents.
+//However, a lone MoveTo will not contribute to the results of PathExtents.
+//
+//Originally cairo_path_extents.
+func (c *Context) PathExtents() Rectangle {
+	var x, y, x1, y1 C.double
+	C.cairo_path_extents(c.c, &x, &y, &x1, &y1)
+	return cRect(x, y, x1, y1)
+}
+
+//GlyphPath adds a closed path for the glyphs to the current path.
+//The generated path, if filled, achieves an effect similar to that
+//of ShowGlyphs.
+//
+//Originally cairo_glyph_path.
+func (c *Context) GlyphPath(glyphs []Glyph) *Context {
+	gs, n := glyphsC(glyphs)
+	C.cairo_glyph_path(c.c, gs, n)
+	return c
+}
+
+//TextPath adds closed paths for text to the current path.
+//The generated path if filled, achieves an effect similar to that of ShowText.
+//
+//Text conversion and positioning is done similar to ShowText.
+//
+//Like ShowText, After this call the current point is moved to the origin
+//of where the next glyph would be placed in this same progression.
+//hat is, the current point will be at the origin of the final glyph offset
+//by its advance values.
+//This allows for chaining multiple calls to to TextPath without having to set
+//current point in between.
+//
+//Note: The TextPath method is part of what the libcairo designers call
+//the "toy" text API.
+//It is convenient for short demos and simple programs, but it is not expected
+//to be adequate for serious text-using applications.
+//See GlyphPath for the "real" text path in cairo.
+//
+//Originally cairo_text_path.
+func (c *Context) TextPath(s string) *Context {
+	cs := C.CString(s)
+	C.cairo_text_path(c.c, cs)
+	C.free(unsafe.Pointer(cs))
 	return c
 }
