@@ -1,11 +1,13 @@
 package cairo
 
 //#cgo pkg-config: cairo
+//#include <stdlib.h>
 //#include <cairo/cairo.h>
 import "C"
 
 import (
 	"runtime"
+	"unsafe"
 )
 
 //FontOptions specify how fonts should be rendered.
@@ -235,4 +237,59 @@ type Font interface {
 	Type() fontType
 	Close() error
 	Err() error
+}
+
+//Glyph holds information about a single glyph when drawing or measuring text.
+//A font is (in simple terms) a collection of shapes used to draw text.
+//A glyph is one of these shapes.
+//There can be multiple glyphs for a single character (alternates to be used
+//in different contexts, for example), or a glyph can be a ligature of multiple
+//characters.
+//Cairo doesn't expose any way of converting input text into glyphs,
+//so in order to use the Cairo interfaces that take arrays of glyphs, you must
+//directly access the appropriate underlying font system.
+//
+//Note that the offsets given by Point.X and Point.Y are not cumulative.
+//When drawing or measuring text, each glyph is individually positioned with respect to the overall origin
+//
+//Originally cairo_glyph_t.
+type Glyph struct {
+	Index uint64
+	Point Point
+}
+
+func cGlyph(g C.cairo_glyph_t) Glyph {
+	return Glyph{
+		Index: uint64(g.index),
+		Point: cPt(g.x, g.y),
+	}
+}
+
+func cGlyphs(glyphs *C.cairo_glyph_t, N C.int) []Glyph {
+	n := int(N)
+	gs := (*[1 << 30]C.cairo_glyph_t)(unsafe.Pointer(glyphs))[:n:n]
+	out := make([]Glyph, n)
+	for i, v := range gs {
+		out[i] = cGlyph(v)
+	}
+	return out
+}
+
+func glyphsC(gs []Glyph) (glyphs *C.cairo_glyph_t, N C.int) {
+	n := len(gs)
+	N = C.int(n)
+	var t C.cairo_glyph_t
+	glyphs = (*C.cairo_glyph_t)(C.malloc(C.size_t(uintptr(n) * unsafe.Sizeof(t))))
+	iter := (*[1 << 30]C.cairo_glyph_t)(unsafe.Pointer(glyphs))[:n:n]
+	for i, g := range gs {
+		iter[i] = g.c()
+	}
+	return
+}
+
+func (g Glyph) c() C.cairo_glyph_t {
+	out := C.cairo_glyph_t{}
+	out.index = C.ulong(g.Index)
+	out.x, out.y = g.Point.c()
+	return out
 }
