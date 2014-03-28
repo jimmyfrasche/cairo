@@ -39,7 +39,7 @@ func initFontOptions(opt *C.cairo_font_options_t) *FontOptions {
 //
 //Originally cairo_font_options_destroy.
 func (f *FontOptions) Close() error {
-	if f.fo == nil {
+	if f == nil || f.fo == nil {
 		return nil
 	}
 	C.cairo_font_options_destroy(f.fo)
@@ -202,7 +202,7 @@ type TextExtents struct {
 	//as drawn.
 	//Positive if the glyphs lie entirely below the origin.
 	//
-	//Originally y_bearing
+	//Originally y_bearing.
 	BearingY float64
 	//Width of the glyphs as drawn.
 	Width float64
@@ -231,12 +231,6 @@ func newTextExtents(te C.cairo_text_extents_t) TextExtents {
 		AdvanceX: float64(te.x_advance),
 		AdvanceY: float64(te.y_advance),
 	}
-}
-
-type Font interface {
-	Type() fontType
-	Close() error
-	Err() error
 }
 
 //Glyph holds information about a single glyph when drawing or measuring text.
@@ -292,4 +286,38 @@ func (g Glyph) c() C.cairo_glyph_t {
 	out.index = C.ulong(g.Index)
 	out.x, out.y = g.Point.c()
 	return out
+}
+
+type Font interface {
+	Type() fontType
+	Close() error
+	Err() error
+	//TODO
+	XtensionRaw() *C.cairo_font_face_t
+}
+
+type XtensionFont struct {
+	f *C.cairo_font_face_t
+}
+
+func cFont(f *C.cairo_font_face_t) (Font, error) {
+	return nil, nil //TODO
+}
+
+type ScaledFont struct {
+	//TODO
+	f *C.cairo_scaled_font_t
+}
+
+func cNewScaledFont(f *C.cairo_scaled_font_t) *ScaledFont {
+	return nil //TODO
+}
+
+//Originally cairo_text_cluster_t.
+type TextCluster struct {
+	RuneLength, NumGlyphs int
+}
+
+func clustersC(tcs []TextCluster) (*C.cairo_text_cluster_t, C.int) {
+	return nil, 0 //TODO
 }
