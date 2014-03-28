@@ -40,10 +40,11 @@ func (c *cairoDevice) Close() error {
 	if c == nil || c.d == nil {
 		return nil
 	}
+	err := c.Err()
 	C.cairo_device_destroy(c.d)
 	c.d = nil
 	runtime.SetFinalizer(c, nil)
-	return nil
+	return err
 }
 
 func (c *cairoDevice) Error() error {

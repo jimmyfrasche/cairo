@@ -10,7 +10,7 @@ import (
 )
 
 type ImageSurface struct {
-	XtensionSurface
+	*XtensionSurface
 	format                format
 	width, height, stride int
 }

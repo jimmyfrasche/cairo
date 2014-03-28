@@ -85,10 +85,11 @@ func (p *pattern) Close() error {
 	if p.p == nil {
 		return nil
 	}
+	err := p.Err()
 	runtime.SetFinalizer(p, nil)
 	C.cairo_pattern_destroy(p.p)
 	p.p = nil
-	return nil
+	return err
 }
 
 //SetExtend sets the mode used for drawing outside the area of this pattern.

@@ -4,6 +4,10 @@ package cairo
 //#include <cairo/cairo.h>
 import "C"
 
+import (
+	"runtime"
+)
+
 var csurftogosurf = map[surfaceType]func(*C.cairo_surface_t) (Surface, error){
 	SurfaceTypeImage: cNewImageSurface,
 }
@@ -123,42 +127,46 @@ type XtensionSurface struct {
 //XtensionNewSurface creates a base go surface from a c surface.
 //
 //This is only for extension builders.
-func XtensionNewSurface(s *C.cairo_surface_t) XtensionSurface {
-	return XtensionSurface{s}
+func XtensionNewSurface(s *C.cairo_surface_t) (x *XtensionSurface) {
+	x = &XtensionSurface{s}
+	runtime.SetFinalizer(x, (*XtensionSurface).Close)
+	return
 }
 
 //XtensionRaw returns the raw cairo_surface_t pointer.
 //
 //XtensionRaw is only meant for creating new surface types and should NEVER
 //be used directly.
-func (e XtensionSurface) XtensionRaw() *C.cairo_surface_t {
+func (e *XtensionSurface) XtensionRaw() *C.cairo_surface_t {
 	return e.s
 }
 
 //Err reports any errors on the surface.
 //
 //Originally cairo_surface_status.
-func (e XtensionSurface) Err() error {
+func (e *XtensionSurface) Err() error {
 	return toerr(C.cairo_surface_status(e.s))
 }
 
 //Close frees the resources used by this surface.
 //
 //Originally cairo_surface_destroy.
-func (e XtensionSurface) Close() error {
+func (e *XtensionSurface) Close() error {
 	if e.s == nil {
 		return nil
 	}
+	err := e.Err()
 	C.cairo_surface_destroy(e.s)
 	e.s = nil
-	return nil
+	runtime.SetFinalizer(e, nil)
+	return err
 }
 
 //Flush performs any pending drawing and restores any temporary modifcations
 //that libcairo has made to the surface's state.
 //
 //Originally cairo_surface_flush.
-func (e XtensionSurface) Flush() error {
+func (e *XtensionSurface) Flush() error {
 	C.cairo_surface_flush(e.s)
 	return e.Err()
 }
@@ -166,21 +174,21 @@ func (e XtensionSurface) Flush() error {
 //Type reports the type of this surface.
 //
 //Originally cairo_surface_get_type.
-func (e XtensionSurface) Type() surfaceType {
+func (e *XtensionSurface) Type() surfaceType {
 	return surfaceType(C.cairo_surface_get_type(e.s))
 }
 
 //Device reports the device of this surface.
 //
 //Originally cairo_surface_get_device.
-func (e XtensionSurface) Device() Device {
+func (e *XtensionSurface) Device() Device {
 	return newCairoDevice(C.cairo_surface_get_device(e.s))
 }
 
 //Content reports the content of the surface.
 //
 //Originally cairo_surface_get_content.
-func (e XtensionSurface) Content() content {
+func (e *XtensionSurface) Content() content {
 	return content(C.cairo_surface_get_content(e.s))
 }
 
@@ -192,14 +200,14 @@ func (e XtensionSurface) Content() content {
 //to ShowGlyphs.
 //
 //Originally cairo_surface_has_show_text_glyphs.
-func (e XtensionSurface) HasShowTextGlyphs() bool {
+func (e *XtensionSurface) HasShowTextGlyphs() bool {
 	return C.cairo_surface_has_show_text_glyphs(e.s) == 1
 }
 
 //FontOptions retrieves the default font rendering options for this surface.
 //
 //Originally cairo_surface_get_font_options.
-func (e XtensionSurface) FontOptions() *FontOptions {
+func (e *XtensionSurface) FontOptions() *FontOptions {
 	f := &C.cairo_font_options_t{}
 	C.cairo_surface_get_font_options(e.s, f)
 	return initFontOptions(f)
@@ -221,17 +229,17 @@ func (e XtensionSurface) FontOptions() *FontOptions {
 //The x and y components are in the unit of the surface's underlying device.
 //
 //Originally cairo_surface_set_device_offset.
-func (e XtensionSurface) SetDeviceOffset(vector Point) {
+func (e *XtensionSurface) SetDeviceOffset(vector Point) {
 	C.cairo_surface_set_device_offset(e.s, C.double(vector.X), C.double(vector.Y))
 }
 
 //DeviceOffset reports the device offset set by SetDeviceOffset.
 //
 //Originally cairo_surface_get_device_offset.
-func (e XtensionSurface) DeviceOffset() (vector Point) {
+func (e *XtensionSurface) DeviceOffset() (vector Point) {
 	var x, y C.double
 	C.cairo_surface_get_device_offset(e.s, &x, &y)
-	return Pt(float64(x), float64(y))
+	return cPt(x, y)
 }
 
 //CreateSimilar is documented in the Surface interface.
@@ -245,9 +253,9 @@ func (e XtensionSurface) DeviceOffset() (vector Point) {
 //have transparency, black otherwise.)
 //
 //Originally cairo_surface_create_similar.
-func (e XtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
+func (e *XtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
 	s := C.cairo_surface_create_similar(e.s, c.c(), C.int(w), C.int(h))
-	o := XtensionSurface{s}
+	o := XtensionNewSurface(s)
 	return o, o.Err()
 }
 
@@ -259,17 +267,15 @@ func (e XtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
 //have transparency, black otherwise.)
 //
 //Originally cairo_surface_create_similar_image.
-func (e XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, error) {
+func (e *XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, error) {
 	s := C.cairo_surface_create_similar_image(e.s, f.c(), C.int(w), C.int(h))
 	stride := int(C.cairo_image_surface_get_stride(s))
 	o := ImageSurface{
-		XtensionSurface: XtensionSurface{
-			s,
-		},
-		format: f,
-		width:  w,
-		height: h,
-		stride: stride,
+		XtensionSurface: XtensionNewSurface(s),
+		format:          f,
+		width:           w,
+		height:          h,
+		stride:          stride,
 	}
 	return o, o.Err()
 }
@@ -289,10 +295,10 @@ func (e XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, e
 //surface, and the target or subsurface's device transforms are not changed.
 //
 //Originally cairo_surface_create_for_rectangle.
-func (e XtensionSurface) CreateSubsurface(r Rectangle) (s Surface, err error) {
+func (e *XtensionSurface) CreateSubsurface(r Rectangle) (s Surface, err error) {
 	x0, y0, x1, y1 := r.Canon().c()
 	ss := C.cairo_surface_create_for_rectangle(e.s, x0, y0, x1, y1)
-	o := XtensionSurface{ss}
+	o := XtensionNewSurface(ss)
 	return o, o.Err()
 }
 
@@ -312,7 +318,7 @@ func fallbackResolution(s *C.cairo_surface_t) (xppi, yppi float64) {
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
 type XtensionVectorSurface struct {
-	XtensionSurface
+	*XtensionSurface
 }
 
 //XtensionNewVectorSurface creates a base go vector surface from a c surface.
@@ -357,7 +363,7 @@ func showPage(s *C.cairo_surface_t) {
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
 type XtensionPagedSurface struct {
-	XtensionSurface
+	*XtensionSurface
 }
 
 //XtensionNewPagedSurface creates a base go paged surface from a c surface.
@@ -392,7 +398,7 @@ func (e XtensionPagedSurface) ShowPage() {
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
 type XtensionPagedVectorSurface struct {
-	XtensionSurface
+	*XtensionSurface
 }
 
 //XtensionNewPagedVectorSurface creates a base go paged vector surface
