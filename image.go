@@ -10,18 +10,18 @@ import (
 )
 
 type ImageSurface struct {
-	ExtensionSurface
+	XtensionSurface
 	format                format
 	width, height, stride int
 }
 
 func newImg(s *C.cairo_surface_t, format format, width, height, stride int) (ImageSurface, error) {
 	S := ImageSurface{
-		ExtensionSurface: ExtensionNewSurface(s),
-		format:           format,
-		width:            width,
-		height:           height,
-		stride:           stride,
+		XtensionSurface: XtensionNewSurface(s),
+		format:          format,
+		width:           width,
+		height:          height,
+		stride:          stride,
 	}
 	return S, S.Err()
 }

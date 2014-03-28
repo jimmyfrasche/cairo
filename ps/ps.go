@@ -18,7 +18,7 @@ import (
 //
 //Surface implements cairo.PagedVectorSurface
 type Surface struct {
-	cairo.ExtensionPagedVectorSurface
+	cairo.XtensionPagedVectorSurface
 	//w is used in NewWriter to ensure a reference to the writer lives as long as we do
 	w   io.Writer
 	eps bool
@@ -26,7 +26,7 @@ type Surface struct {
 
 func news(s *C.cairo_surface_t, eps bool) (Surface, error) {
 	S := Surface{
-		ExtensionPagedVectorSurface: cairo.ExtensionNewPagedVectorSurface(s),
+		XtensionPagedVectorSurface: cairo.XtensionNewPagedVectorSurface(s),
 		eps: eps,
 	}
 	return S, S.Err()
@@ -41,7 +41,7 @@ func cNew(s *C.cairo_surface_t) (cairo.Surface, error) {
 }
 
 func init() {
-	cairo.ExtensionRegisterRawToSurface(cairo.SurfaceTypePS, cNew)
+	cairo.XtensionRegisterRawToSurface(cairo.SurfaceTypePS, cNew)
 }
 
 func cfgSurf(ps *C.cairo_surface_t, eps bool, header, setup Comments) {
@@ -97,7 +97,7 @@ func New(w io.Writer, width, height float64, eps bool, header, setup Comments) (
 	}
 
 	wp := unsafe.Pointer(&w)
-	ps := C.cairo_ps_surface_create_for_stream(cairo.ExtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
+	ps := C.cairo_ps_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 
 	cfgSurf(ps, eps, header, setup)
 
@@ -138,7 +138,7 @@ func NewFile(filename string, width, height float64, eps bool, header, setup Com
 //
 //Originally cairo_ps_surface_restrict_to_level.
 func (s Surface) RestrictTo(level level) error {
-	C.cairo_ps_surface_restrict_to_level(s.ExtensionRaw(), level.c())
+	C.cairo_ps_surface_restrict_to_level(s.XtensionRaw(), level.c())
 	return s.Err()
 }
 
@@ -150,7 +150,7 @@ func (s Surface) RestrictTo(level level) error {
 //
 //Originally cairo_ps_surface_set_size.
 func (s Surface) SetSize(width, height float64) error {
-	C.cairo_ps_surface_set_size(s.ExtensionRaw(), C.double(width), C.double(height))
+	C.cairo_ps_surface_set_size(s.XtensionRaw(), C.double(width), C.double(height))
 	return s.Err()
 }
 
@@ -171,7 +171,7 @@ func (s Surface) AddComments(comments Comments) (err error) {
 
 	for _, c := range comments {
 		str := C.CString(c.String())
-		C.cairo_ps_surface_dsc_comment(s.ExtensionRaw(), str)
+		C.cairo_ps_surface_dsc_comment(s.XtensionRaw(), str)
 		C.free(unsafe.Pointer(str))
 	}
 

@@ -196,7 +196,7 @@ func NewSurfacePattern(s Surface) (sp SurfacePattern, err error) {
 	if err = s.Err(); err != nil {
 		return
 	}
-	r := s.ExtensionRaw()
+	r := s.XtensionRaw()
 	p := C.cairo_pattern_create_for_surface(r)
 	sp = SurfacePattern{
 		pattern: newPattern(p),

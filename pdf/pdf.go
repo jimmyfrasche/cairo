@@ -18,14 +18,14 @@ import (
 //
 //Surface implements cairo.PagedVectorSurface.
 type Surface struct {
-	cairo.ExtensionPagedVectorSurface
+	cairo.XtensionPagedVectorSurface
 	//w is used in NewWriter to ensure a reference to the writer lives as long as we do
 	w io.Writer
 }
 
 func news(s *C.cairo_surface_t) (Surface, error) {
 	S := Surface{
-		ExtensionPagedVectorSurface: cairo.ExtensionNewPagedVectorSurface(s),
+		XtensionPagedVectorSurface: cairo.XtensionNewPagedVectorSurface(s),
 	}
 	return S, S.Err()
 }
@@ -35,7 +35,7 @@ func cNew(s *C.cairo_surface_t) (cairo.Surface, error) {
 }
 
 func init() {
-	cairo.ExtensionRegisterRawToSurface(cairo.SurfaceTypePDF, cNew)
+	cairo.XtensionRegisterRawToSurface(cairo.SurfaceTypePDF, cNew)
 }
 
 //New creates a new PDF of the specified size.
@@ -46,7 +46,7 @@ func init() {
 //Originally cairo_pdf_surface_create_for_stream.
 func New(w io.Writer, width, height float64) (Surface, error) {
 	wp := unsafe.Pointer(&w)
-	pdf := C.cairo_pdf_surface_create_for_stream(cairo.ExtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
+	pdf := C.cairo_pdf_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	return news(pdf)
 }
 
@@ -70,7 +70,7 @@ func NewFile(filename string, width, height float64) (Surface, error) {
 //
 //Originally cairo_pdf_surface_restrict_to_version.
 func (s Surface) RestrictTo(v version) error {
-	C.cairo_pdf_surface_restrict_to_version(s.ExtensionRaw(), C.cairo_pdf_version_t(v))
+	C.cairo_pdf_surface_restrict_to_version(s.XtensionRaw(), C.cairo_pdf_version_t(v))
 	return s.Err()
 }
 
@@ -82,6 +82,6 @@ func (s Surface) RestrictTo(v version) error {
 //
 //Originally cairo_pdf_surface_set_size.
 func (s Surface) SetSize(width, height float64) error {
-	C.cairo_pdf_surface_set_size(s.ExtensionRaw(), C.double(width), C.double(height))
+	C.cairo_pdf_surface_set_size(s.XtensionRaw(), C.double(width), C.double(height))
 	return s.Err()
 }

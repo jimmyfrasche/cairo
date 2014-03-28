@@ -22,14 +22,14 @@ import (
 	"unsafe"
 )
 
-//ExtensionCairoWriteFuncT is a cairo_write_func_t that expects an *io.Writer
+//XtensionCairoWriteFuncT is a cairo_write_func_t that expects an *io.Writer
 //as its closure argument.
 //
 //It is the caller's responsibility to hold a reference to the io.Writer so that it does
 //not become garbage collected.
 //
 //See cairo/svg for an example.
-var ExtensionCairoWriteFuncT = C.callback_getter()
+var XtensionCairoWriteFuncT = C.callback_getter()
 
 //export go_write_callback
 func go_write_callback(writer unsafe.Pointer, data *C.uchar, length C.uint) C.cairo_status_t {

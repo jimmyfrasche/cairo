@@ -18,7 +18,7 @@ import (
 //
 //Surface implements cairo.VectorSurface.
 type Surface struct {
-	cairo.ExtensionVectorSurface
+	cairo.XtensionVectorSurface
 	//w is used in NewWriter to ensure a reference to the writer lives as long as we do
 	w io.Writer
 }
@@ -34,7 +34,7 @@ func NewFile(filename string, width, height float64) (Surface, error) {
 	svg := C.cairo_svg_surface_create(nm, C.double(width), C.double(height))
 	C.free(unsafe.Pointer(nm))
 	s := Surface{
-		ExtensionVectorSurface: cairo.ExtensionNewVectorSurface(svg),
+		XtensionVectorSurface: cairo.XtensionNewVectorSurface(svg),
 	}
 	return s, s.Err()
 }
@@ -50,9 +50,9 @@ func NewFile(filename string, width, height float64) (Surface, error) {
 //Originally cairo_svg_surface_create_for_stream.
 func New(w io.Writer, width, height float64) (Surface, error) {
 	wp := unsafe.Pointer(&w)
-	svg := C.cairo_svg_surface_create_for_stream(cairo.ExtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
+	svg := C.cairo_svg_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	s := Surface{
-		ExtensionVectorSurface: cairo.ExtensionNewVectorSurface(svg),
+		XtensionVectorSurface: cairo.XtensionNewVectorSurface(svg),
 		w: w,
 	}
 	return s, s.Err()
@@ -62,13 +62,13 @@ func cNew(s *C.cairo_surface_t) (cairo.Surface, error) {
 	//Note that if the surface was created with an io.Writer we have no way of
 	//getting it here but that's okay as long as the original reference lives on.
 	S := Surface{
-		ExtensionVectorSurface: cairo.ExtensionNewVectorSurface(s),
+		XtensionVectorSurface: cairo.XtensionNewVectorSurface(s),
 	}
 	return S, S.Err()
 }
 
 func init() {
-	cairo.ExtensionRegisterRawToSurface(cairo.SurfaceTypeSVG, cNew)
+	cairo.XtensionRegisterRawToSurface(cairo.SurfaceTypeSVG, cNew)
 }
 
 //BUG(jmf): add documentation about mime type to New after I figure out what that entails.
@@ -82,6 +82,6 @@ func init() {
 //
 //Originally cairo_svg_surface_restrict_to_version.
 func (s Surface) RestrictTo(v version) error {
-	C.cairo_svg_surface_restrict_to_version(s.ExtensionRaw(), v.c())
+	C.cairo_svg_surface_restrict_to_version(s.XtensionRaw(), v.c())
 	return s.Err()
 }

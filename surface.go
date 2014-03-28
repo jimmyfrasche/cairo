@@ -8,13 +8,13 @@ var csurftogosurf = map[surfaceType]func(*C.cairo_surface_t) (Surface, error){
 	SurfaceTypeImage: cNewImageSurface,
 }
 
-//ExtensionRegisterRawToSurface registers a factory to convert a libcairo
+//XtensionRegisterRawToSurface registers a factory to convert a libcairo
 //surface into a properly formed cairo Surface of the appropriate type.
 //
 //It is mandatory for extensions defining new surface types to call this
 //function during init, otherwise users will get random not implemented
 //panics for your surface.
-func ExtensionRegisterRawToSurface(t surfaceType, f func(*C.cairo_surface_t) (Surface, error)) {
+func XtensionRegisterRawToSurface(t surfaceType, f func(*C.cairo_surface_t) (Surface, error)) {
 	csurftogosurf[t] = f
 }
 
@@ -40,7 +40,7 @@ func cSurface(s *C.cairo_surface_t) (Surface, error) {
 //
 //To draw to a Surface, create a Context with the surface as the target.
 //
-//All methods are documented on ExtensionSurface.
+//All methods are documented on XtensionSurface.
 type Surface interface {
 	CreateSimilar(c content, w, h int) (Surface, error)
 	CreateSimilarImage(f format, w, h int) (ImageSurface, error)
@@ -62,9 +62,9 @@ type Surface interface {
 
 	HasShowTextGlyphs() bool
 
-	//ExtensionRaw is ONLY for adding libcairo subsystems outside this package.
+	//XtensionRaw is ONLY for adding libcairo subsystems outside this package.
 	//Otherwise just ignore.
-	ExtensionRaw() *C.cairo_surface_t
+	XtensionRaw() *C.cairo_surface_t
 }
 
 //BUG(jmf): Surface: how to handle map/unmap
@@ -74,7 +74,7 @@ type Surface interface {
 //VectorBacked is the set of methods available to a surface
 //with a native vector backend.
 //
-//All methods are documented on ExtensionVectorSurface.
+//All methods are documented on XtensionVectorSurface.
 type VectorBacked interface {
 	SetFallbackResolution(xppi, yppi float64)
 	FallbackResolution() (xppi, yppi float64)
@@ -82,7 +82,7 @@ type VectorBacked interface {
 
 //VectorSurface is a surface with a native vector backend.
 //
-//All VectorBacked methods are documented on ExtensionVectorSurface.
+//All VectorBacked methods are documented on XtensionVectorSurface.
 type VectorSurface interface {
 	Surface
 	VectorBacked
@@ -90,7 +90,7 @@ type VectorSurface interface {
 
 //Paged is the set of methods available to a paged surface.
 //
-//All methods are documented on ExtensionPagedSurface.
+//All methods are documented on XtensionPagedSurface.
 type Paged interface {
 	ShowPage()
 	CopyPage()
@@ -98,7 +98,7 @@ type Paged interface {
 
 //PagedSurface is a surface that has the concept of pages.
 //
-//All Paged methods are documented on ExtensionPagedSurface.
+//All Paged methods are documented on XtensionPagedSurface.
 type PagedSurface interface {
 	Surface
 	Paged
@@ -112,40 +112,40 @@ type PagedVectorSurface interface {
 	VectorBacked
 }
 
-//ExtensionSurface is the "base class" for cairo surfaces.
+//XtensionSurface is the "base class" for cairo surfaces.
 //
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
-type ExtensionSurface struct {
+type XtensionSurface struct {
 	s *C.cairo_surface_t
 }
 
-//ExtensionNewSurface creates a base go surface from a c surface.
+//XtensionNewSurface creates a base go surface from a c surface.
 //
 //This is only for extension builders.
-func ExtensionNewSurface(s *C.cairo_surface_t) ExtensionSurface {
-	return ExtensionSurface{s}
+func XtensionNewSurface(s *C.cairo_surface_t) XtensionSurface {
+	return XtensionSurface{s}
 }
 
-//ExtensionRaw returns the raw cairo_surface_t pointer.
+//XtensionRaw returns the raw cairo_surface_t pointer.
 //
-//ExtensionRaw is only meant for creating new surface types and should NEVER
+//XtensionRaw is only meant for creating new surface types and should NEVER
 //be used directly.
-func (e ExtensionSurface) ExtensionRaw() *C.cairo_surface_t {
+func (e XtensionSurface) XtensionRaw() *C.cairo_surface_t {
 	return e.s
 }
 
 //Err reports any errors on the surface.
 //
 //Originally cairo_surface_status.
-func (e ExtensionSurface) Err() error {
+func (e XtensionSurface) Err() error {
 	return toerr(C.cairo_surface_status(e.s))
 }
 
 //Close frees the resources used by this surface.
 //
 //Originally cairo_surface_destroy.
-func (e ExtensionSurface) Close() error {
+func (e XtensionSurface) Close() error {
 	if e.s == nil {
 		return nil
 	}
@@ -158,7 +158,7 @@ func (e ExtensionSurface) Close() error {
 //that libcairo has made to the surface's state.
 //
 //Originally cairo_surface_flush.
-func (e ExtensionSurface) Flush() error {
+func (e XtensionSurface) Flush() error {
 	C.cairo_surface_flush(e.s)
 	return e.Err()
 }
@@ -166,21 +166,21 @@ func (e ExtensionSurface) Flush() error {
 //Type reports the type of this surface.
 //
 //Originally cairo_surface_get_type.
-func (e ExtensionSurface) Type() surfaceType {
+func (e XtensionSurface) Type() surfaceType {
 	return surfaceType(C.cairo_surface_get_type(e.s))
 }
 
 //Device reports the device of this surface.
 //
 //Originally cairo_surface_get_device.
-func (e ExtensionSurface) Device() Device {
+func (e XtensionSurface) Device() Device {
 	return newCairoDevice(C.cairo_surface_get_device(e.s))
 }
 
 //Content reports the content of the surface.
 //
 //Originally cairo_surface_get_content.
-func (e ExtensionSurface) Content() content {
+func (e XtensionSurface) Content() content {
 	return content(C.cairo_surface_get_content(e.s))
 }
 
@@ -192,14 +192,14 @@ func (e ExtensionSurface) Content() content {
 //to ShowGlyphs.
 //
 //Originally cairo_surface_has_show_text_glyphs.
-func (e ExtensionSurface) HasShowTextGlyphs() bool {
+func (e XtensionSurface) HasShowTextGlyphs() bool {
 	return C.cairo_surface_has_show_text_glyphs(e.s) == 1
 }
 
 //FontOptions retrieves the default font rendering options for this surface.
 //
 //Originally cairo_surface_get_font_options.
-func (e ExtensionSurface) FontOptions() *FontOptions {
+func (e XtensionSurface) FontOptions() *FontOptions {
 	f := &C.cairo_font_options_t{}
 	C.cairo_surface_get_font_options(e.s, f)
 	return initFontOptions(f)
@@ -221,14 +221,14 @@ func (e ExtensionSurface) FontOptions() *FontOptions {
 //The x and y components are in the unit of the surface's underlying device.
 //
 //Originally cairo_surface_set_device_offset.
-func (e ExtensionSurface) SetDeviceOffset(vector Point) {
+func (e XtensionSurface) SetDeviceOffset(vector Point) {
 	C.cairo_surface_set_device_offset(e.s, C.double(vector.X), C.double(vector.Y))
 }
 
 //DeviceOffset reports the device offset set by SetDeviceOffset.
 //
 //Originally cairo_surface_get_device_offset.
-func (e ExtensionSurface) DeviceOffset() (vector Point) {
+func (e XtensionSurface) DeviceOffset() (vector Point) {
 	var x, y C.double
 	C.cairo_surface_get_device_offset(e.s, &x, &y)
 	return Pt(float64(x), float64(y))
@@ -245,9 +245,9 @@ func (e ExtensionSurface) DeviceOffset() (vector Point) {
 //have transparency, black otherwise.)
 //
 //Originally cairo_surface_create_similar.
-func (e ExtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
+func (e XtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
 	s := C.cairo_surface_create_similar(e.s, c.c(), C.int(w), C.int(h))
-	o := ExtensionSurface{s}
+	o := XtensionSurface{s}
 	return o, o.Err()
 }
 
@@ -259,11 +259,11 @@ func (e ExtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
 //have transparency, black otherwise.)
 //
 //Originally cairo_surface_create_similar_image.
-func (e ExtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, error) {
+func (e XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, error) {
 	s := C.cairo_surface_create_similar_image(e.s, f.c(), C.int(w), C.int(h))
 	stride := int(C.cairo_image_surface_get_stride(s))
 	o := ImageSurface{
-		ExtensionSurface: ExtensionSurface{
+		XtensionSurface: XtensionSurface{
 			s,
 		},
 		format: f,
@@ -289,10 +289,10 @@ func (e ExtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, 
 //surface, and the target or subsurface's device transforms are not changed.
 //
 //Originally cairo_surface_create_for_rectangle.
-func (e ExtensionSurface) CreateSubsurface(r Rectangle) (s Surface, err error) {
+func (e XtensionSurface) CreateSubsurface(r Rectangle) (s Surface, err error) {
 	x0, y0, x1, y1 := r.Canon().c()
 	ss := C.cairo_surface_create_for_rectangle(e.s, x0, y0, x1, y1)
-	o := ExtensionSurface{ss}
+	o := XtensionSurface{ss}
 	return o, o.Err()
 }
 
@@ -306,20 +306,20 @@ func fallbackResolution(s *C.cairo_surface_t) (xppi, yppi float64) {
 	return float64(x), float64(y)
 }
 
-//ExtensionVectorSurface is the "base class" for cairo surfaces
+//XtensionVectorSurface is the "base class" for cairo surfaces
 //that have native support for vector graphics.
 //
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
-type ExtensionVectorSurface struct {
-	ExtensionSurface
+type XtensionVectorSurface struct {
+	XtensionSurface
 }
 
-//ExtensionNewVectorSurface creates a base go vector surface from a c surface.
+//XtensionNewVectorSurface creates a base go vector surface from a c surface.
 //
 //This is only for extension builders.
-func ExtensionNewVectorSurface(s *C.cairo_surface_t) ExtensionVectorSurface {
-	return ExtensionVectorSurface{ExtensionNewSurface(s)}
+func XtensionNewVectorSurface(s *C.cairo_surface_t) XtensionVectorSurface {
+	return XtensionVectorSurface{XtensionNewSurface(s)}
 }
 
 //SetFallbackResolution sets the horizontal and vertical resolution
@@ -332,14 +332,14 @@ func ExtensionNewVectorSurface(s *C.cairo_surface_t) ExtensionVectorSurface {
 //If not called the default for x and y is 300 pixels per inch.
 //
 //Originally cairo_surface_set_fallback_resolution.
-func (e ExtensionVectorSurface) SetFallbackResolution(xppi, yppi float64) {
+func (e XtensionVectorSurface) SetFallbackResolution(xppi, yppi float64) {
 	setFallbackResolution(e.s, xppi, yppi)
 }
 
 //FallbackResolution reports the fallback resolution.
 //
 //Originally cairo_surface_get_fallback_resolution.
-func (e ExtensionVectorSurface) FallbackResolution() (xppi, yppi float64) {
+func (e XtensionVectorSurface) FallbackResolution() (xppi, yppi float64) {
 	return fallbackResolution(e.s)
 }
 
@@ -351,20 +351,20 @@ func showPage(s *C.cairo_surface_t) {
 	C.cairo_surface_show_page(s)
 }
 
-//ExtensionPagedSurface is the "base class" for cairo surfaces
+//XtensionPagedSurface is the "base class" for cairo surfaces
 //that are paged.
 //
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
-type ExtensionPagedSurface struct {
-	ExtensionSurface
+type XtensionPagedSurface struct {
+	XtensionSurface
 }
 
-//ExtensionNewPagedSurface creates a base go paged surface from a c surface.
+//XtensionNewPagedSurface creates a base go paged surface from a c surface.
 //
 //This is only for extension builders.
-func ExtensionNewPagedSurface(s *C.cairo_surface_t) ExtensionPagedSurface {
-	return ExtensionPagedSurface{ExtensionNewSurface(s)}
+func XtensionNewPagedSurface(s *C.cairo_surface_t) XtensionPagedSurface {
+	return XtensionPagedSurface{XtensionNewSurface(s)}
 }
 
 //CopyPage emits the current page, but does not clear it.
@@ -373,7 +373,7 @@ func ExtensionNewPagedSurface(s *C.cairo_surface_t) ExtensionPagedSurface {
 //Use ShowPage to emit the current page and clear it.
 //
 //Originally cairo_surface_copy_page.
-func (e ExtensionPagedSurface) CopyPage() {
+func (e XtensionPagedSurface) CopyPage() {
 	copyPage(e.s)
 }
 
@@ -382,43 +382,43 @@ func (e ExtensionPagedSurface) CopyPage() {
 //Use CopyPage if you want to emit the current page but not clear it.
 //
 //Originally cairo_surface_show_page.
-func (e ExtensionPagedSurface) ShowPage() {
+func (e XtensionPagedSurface) ShowPage() {
 	showPage(e.s)
 }
 
-//ExtensionPagedVectorSurface is the "base class" for cairo surfaces
+//XtensionPagedVectorSurface is the "base class" for cairo surfaces
 //that are paged and have native support for vector graphics.
 //
 //It is meant only for embedding in new surface types and should NEVER
 //be used directly.
-type ExtensionPagedVectorSurface struct {
-	ExtensionSurface
+type XtensionPagedVectorSurface struct {
+	XtensionSurface
 }
 
-//ExtensionNewPagedVectorSurface creates a base go paged vector surface
+//XtensionNewPagedVectorSurface creates a base go paged vector surface
 //from a c surface.
 //
 //This is only for extension builders.
-func ExtensionNewPagedVectorSurface(s *C.cairo_surface_t) ExtensionPagedVectorSurface {
-	return ExtensionPagedVectorSurface{ExtensionNewSurface(s)}
+func XtensionNewPagedVectorSurface(s *C.cairo_surface_t) XtensionPagedVectorSurface {
+	return XtensionPagedVectorSurface{XtensionNewSurface(s)}
 }
 
-//SetFallbackResolution is documented on ExtensionVectorSurface.
-func (e ExtensionPagedVectorSurface) SetFallbackResolution(xppi, yppi float64) {
+//SetFallbackResolution is documented on XtensionVectorSurface.
+func (e XtensionPagedVectorSurface) SetFallbackResolution(xppi, yppi float64) {
 	setFallbackResolution(e.s, xppi, yppi)
 }
 
-//FallbackResolution is documented on ExtensionVectorSurface.
-func (e ExtensionPagedVectorSurface) FallbackResolution() (xppi, yppi float64) {
+//FallbackResolution is documented on XtensionVectorSurface.
+func (e XtensionPagedVectorSurface) FallbackResolution() (xppi, yppi float64) {
 	return fallbackResolution(e.s)
 }
 
-//CopyPage is documented on ExtensionPagedSurface.
-func (e ExtensionPagedVectorSurface) CopyPage() {
+//CopyPage is documented on XtensionPagedSurface.
+func (e XtensionPagedVectorSurface) CopyPage() {
 	copyPage(e.s)
 }
 
-//ShowPage is documented on ExtensionPagedSurface.
-func (e ExtensionPagedVectorSurface) ShowPage() {
+//ShowPage is documented on XtensionPagedSurface.
+func (e XtensionPagedVectorSurface) ShowPage() {
 	showPage(e.s)
 }
