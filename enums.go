@@ -234,8 +234,6 @@ type fillRule int
 //(Note that filling is not actually implemented in this way.
 //This is just a description of the rule that is applied.)
 //
-//The default fillRule is FillRuleWinding.
-//
 //Originally cairo_fill_rule_t.
 const (
 	//FillRuleWinding works as follows:
@@ -244,7 +242,7 @@ const (
 	//(Left and right are determined from the perspective of looking along
 	//the ray from the starting point.) If the total count is non-zero,
 	//the point will be filled.
-	FillRuleWinding fillRule = C.CAIRO_FILL_RULE_WINDING //default
+	FillRuleWinding fillRule = C.CAIRO_FILL_RULE_WINDING
 
 	//FillRuleEvenOdd counts the total number of intersections,
 	//without regard to the orientation of the contour.
@@ -319,27 +317,31 @@ func (f filter) String() string {
 }
 
 //cairo_font_slant_t
-type fontSlant int
+type slant int
 
 //Specifies variants of a font face based on their slant.
 //
 //Originally cairo_font_slant_t.
 const (
-	//FontSlantNormal is standard upright font style.
-	FontSlantNormal fontSlant = C.CAIRO_FONT_SLANT_NORMAL
-	//FontSlantItalic is italic font style.
-	FontSlantItalic fontSlant = C.CAIRO_FONT_SLANT_ITALIC
-	//FontSlantOblique is oblique font style.
-	FontSlantOblique fontSlant = C.CAIRO_FONT_SLANT_OBLIQUE
+	//SlantNormal is standard upright font style.
+	SlantNormal slant = C.CAIRO_FONT_SLANT_NORMAL
+	//SlantItalic is italic font style.
+	SlantItalic slant = C.CAIRO_FONT_SLANT_ITALIC
+	//SlantOblique is oblique font style.
+	SlantOblique slant = C.CAIRO_FONT_SLANT_OBLIQUE
 )
 
-func (s fontSlant) String() string {
+func (s slant) c() C.cairo_font_slant_t {
+	return C.cairo_font_slant_t(s)
+}
+
+func (s slant) String() string {
 	switch s {
-	case FontSlantNormal:
+	case SlantNormal:
 		return "normal font slant"
-	case FontSlantItalic:
+	case SlantItalic:
 		return "italic font slant"
-	case FontSlantOblique:
+	case SlantOblique:
 		return "oblique font slant"
 	}
 	return "unknown font slant"
@@ -381,23 +383,27 @@ func (f fontType) String() string {
 }
 
 //cairo_font_weight_t
-type fontWeight int
+type weight int
 
 //Specifies variants of a font face based on their weight.
 //
 //Orginally cairo_font_weight_t.
 const (
-	//FontWeightNormal is normal font weight.
-	FontWeightNormal fontWeight = C.CAIRO_FONT_WEIGHT_NORMAL
-	//FontWeightBold is bold font weight.
-	FontWeightBold fontWeight = C.CAIRO_FONT_WEIGHT_BOLD
+	//WeightNormal is normal font weight.
+	WeightNormal weight = C.CAIRO_FONT_WEIGHT_NORMAL
+	//WeightBold is bold font weight.
+	WeightBold weight = C.CAIRO_FONT_WEIGHT_BOLD
 )
 
-func (w fontWeight) String() string {
+func (w weight) c() C.cairo_font_weight_t {
+	return C.cairo_font_weight_t(w)
+}
+
+func (w weight) String() string {
 	switch w {
-	case FontWeightNormal:
+	case WeightNormal:
 		return "normal font weight"
-	case FontWeightBold:
+	case WeightBold:
 		return "bold font weight"
 	}
 	return "unknown font weight"
@@ -585,7 +591,7 @@ type lineJoin int
 //Originally cairo_line_join_t.
 const (
 	//LineJoinMiter uses a sharp (angled) corner.
-	LineJoinMiter lineJoin = C.CAIRO_LINE_JOIN_MITER //default
+	LineJoinMiter lineJoin = C.CAIRO_LINE_JOIN_MITER
 	//LineJoinRound uses a rounded join, the center of the circle
 	//is the join point.
 	LineJoinRound lineJoin = C.CAIRO_LINE_JOIN_ROUND
@@ -618,8 +624,6 @@ type op int
 
 //An op sets the compositing operator for all cairo drawing operations.
 //
-//The default op is OpOver.
-//
 //The operators marked as unbounded modify their destination even outside
 //of the mask layer (that is, their effect is not bound by the mask layer).
 //However, their effect can still be limited by way of clipping.
@@ -641,7 +645,7 @@ const (
 	OpSource op = C.CAIRO_OPERATOR_SOURCE
 
 	//OpOver draws source layer on top of destination layer (bounded).
-	OpOver op = C.CAIRO_OPERATOR_OVER //default
+	OpOver op = C.CAIRO_OPERATOR_OVER
 
 	//OpIn draws source where there was destination content (unbounded).
 	OpIn op = C.CAIRO_OPERATOR_IN
@@ -804,7 +808,7 @@ func (o op) String() string {
 	default:
 		s = "unknown"
 	}
-	return s + " operation"
+	return s + " operator"
 }
 
 type patternType int
@@ -1065,4 +1069,32 @@ func (t surfaceType) String() string {
 		s = "unknown"
 	}
 	return s + " surface type"
+}
+
+//cairo_text_cluster_flags_t
+type textClusterFlags int
+
+//The textClusterFlags type specifies properties of a text cluster mapping.
+const (
+	//TextClusterDefault specifies that the default properties are to be used.
+	TextClusterDefault textClusterFlags = 0
+	//TextClusterBackward specifies that the clusters in the cluster slice map
+	//to glyphs in the glyph slice from end to start.
+	TextClusterBackward textClusterFlags = C.CAIRO_TEXT_CLUSTER_FLAG_BACKWARD
+)
+
+func (t textClusterFlags) c() C.cairo_text_cluster_flags_t {
+	return C.cairo_text_cluster_flags_t(t)
+}
+
+func (t textClusterFlags) String() (s string) {
+	switch t {
+	case 0:
+		s = "No"
+	case TextClusterBackward:
+		s = "Backwards"
+	default:
+		s = "unknown"
+	}
+	return s + " text cluster flag"
 }
