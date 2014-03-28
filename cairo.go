@@ -12,7 +12,6 @@ import (
 )
 
 //Version returns the version of libcairo.
-
 func Version() string {
 	return C.GoString(C.cairo_version_string())
 }
@@ -20,6 +19,8 @@ func Version() string {
 //The Context is the main object used when drawing with cairo.
 //
 //Defaults
+//
+//The default compositing operator is OpOver.
 //
 //The default source pattern is equivalent to
 //	cairo.NewSolidPattern(color.Black)
@@ -38,6 +39,15 @@ func Version() string {
 //
 //The default tolerance is 0.1.
 //
+//The default font size is 10.
+//
+//The default font slant is SlantNormal.
+//
+//The default font weight is WeightNormal.
+//
+//The default font family is platform-specific but typically "sans-serif",
+//using the toy font api.
+//
 //Originally cairo_t.
 type Context struct {
 	c *C.cairo_t
@@ -48,7 +58,7 @@ type Context struct {
 //
 //Originally cairo_create.
 func New(target Surface) (*Context, error) {
-	s := target.ExtensionRaw()
+	s := target.XtensionRaw()
 	c := &Context{
 		c: C.cairo_create(s),
 		s: target,
@@ -276,7 +286,7 @@ func (c *Context) SetSource(source Pattern) *Context {
 //
 //Originally cairo_set_source_surface.
 func (c *Context) SetSourceSurface(s Surface, originDisplacement Point) error {
-	sr := s.ExtensionRaw()
+	sr := s.XtensionRaw()
 	x, y := originDisplacement.c()
 	C.cairo_set_source_surface(c.c, sr, x, y)
 	return c.Err()
@@ -708,7 +718,7 @@ func (c *Context) Mask(p Pattern) *Context {
 //Originally cairo_mask_surface.
 func (c *Context) MaskSurface(s Surface, offsetVector Point) *Context {
 	x, y := offsetVector.c()
-	C.cairo_mask_surface(c.c, s.ExtensionRaw(), x, y)
+	C.cairo_mask_surface(c.c, s.XtensionRaw(), x, y)
 	return c
 }
 
@@ -1166,4 +1176,243 @@ func (c *Context) TextPath(s string) *Context {
 	C.cairo_text_path(c.c, cs)
 	C.free(unsafe.Pointer(cs))
 	return c
+}
+
+//SelectFont selects a family and style of font from a simplified
+//description as a family name, slant and weight.
+//
+//Libcairo provides no operation to list available family names
+//on the system, as this is part of the toy api.
+//The standard CSS2 generic family names, ("serif", "sans-serif", "cursive",
+//"fantasy", "monospace"), are likely to work as expected.
+//
+//If family starts with the string "cairo:", or if no native font backends are
+//compiled in, libcairo will use an internal font family.
+//
+//If text is drawn without a call to SelectFont or SetFont
+//or SetScaledFont, the platform-specific default family is used, typically
+//"sans-serif", and the default slant is SlantNormal and the default weight
+//is WeightNormal.
+//
+//For "real" see the font-backend-specific factor functions for the font
+//backend you are using.
+//The resulting font face could then be used with ScaledFontCreate and
+//SetScaledFont.
+//
+//Note
+//
+//SelectFont is part of the "toy" text API.
+//
+//Originally cairo_select_font_face.
+func (c *Context) SelectFont(family string, slant slant, weight weight) *Context {
+	f := C.CString(family)
+	C.cairo_select_font_face(c.c, f, slant.c(), weight.c())
+	C.free(unsafe.Pointer(f))
+	return c
+}
+
+//SetFontSize sets the current font matrix to a scale by a factor of size,
+//replacing any font matrix previously set with SetFontSize or SetFontMatrix.
+//
+//Originally cairo_set_font_size.
+func (c *Context) SetFontSize(size float64) *Context {
+	C.cairo_set_font_size(c.c, C.double(size))
+	return c
+}
+
+//SetFontMatrix sets the current font matrix to m.
+//The font matrix gives a transformation from the design space of the font
+//(in this space, the em-square is 1 unit by 1 unit) to user space.
+//
+//Originally cairo_set_font_matrix.
+func (c *Context) SetFontMatrix(m Matrix) *Context {
+	C.cairo_set_font_matrix(c.c, &m.m)
+	return c
+}
+
+//FontMatrix reports the current font matrix.
+//
+//Originally cairo_get_font_matrix.
+func (c *Context) FontMatrix() Matrix {
+	var m C.cairo_matrix_t
+	C.cairo_get_font_matrix(c.c, &m)
+	return Matrix{m}
+}
+
+//SetFontOptions sets the custom font rendering options for c.
+//Rendering operations are derived by merging opts with the
+//FontOptions of the underlying surface:
+//if any of the options in opts is the default, the value of
+//the surface is used.
+//
+//Originally cairo_set_font_options.
+func (c *Context) SetFontOptions(opts *FontOptions) *Context {
+	C.cairo_set_font_options(c.c, opts.fo)
+	return c
+}
+
+//FontOptions reports the current font options of c.
+//
+//Originally cairo_get_font_options.
+func (c *Context) FontOptions() *FontOptions {
+	f := NewFontOptions()
+	C.cairo_get_font_options(c.c, f.fo)
+	return f
+}
+
+//SetFont replaces the current font face of c with f.
+//
+//Originally cairo_set_font_face.
+func (c *Context) SetFont(f Font) *Context {
+	C.cairo_set_font_face(c.c, f.XtensionRaw())
+	return c
+}
+
+//Font returns the current font face for c.
+//
+//Originally cairo_get_font_face.
+func (c *Context) Font() (Font, error) {
+	fr := C.cairo_get_font_face(c.c)
+	fr = C.cairo_font_face_reference(fr)
+	return cFont(fr)
+}
+
+//SetScaledFont replaces the current font face, font matrix, and font options
+//with those of sf.
+//Except for some translation, the current coordinate transforms matrix of c
+//should be the same as that of sf.
+//
+//Originally cairo_set_scaled_font.
+func (c *Context) SetScaledFont(sf *ScaledFont) *Context {
+	C.cairo_set_scaled_font(c.c, sf.f)
+	return c
+}
+
+//ScaledFont reports the scaled font of c.
+//
+//Originally cairo_get_scaled_font.
+func (c *Context) ScaledFont() (*ScaledFont, error) {
+	//XXX calling this with no scaled font set breaks c. Have a scaledFontSet field on c and
+	//return a synthetic error if false? Is cairo_t revivified anywhere?
+	f := C.cairo_get_scaled_font(c.c)
+	f = C.cairo_scaled_font_reference(f)
+	sf := cNewScaledFont(f)
+	return sf, c.Err()
+}
+
+//ShowText draws a shape generated from s, rendered according to the current
+//Font, font matrix, and FontOptions.
+//
+//This method first computes a set of glyphs for the string of text.
+//The first glyph is placed so that its origin is at the current point.
+//The origin of each subsequent glyph is offset from that of the previous glyph
+//by the advance values of the previous glyph.
+//
+//After this call the current point is moved to the origin of where the next
+//glyph would be placed in this same progression.
+//That is, the current point will be at the origin of the final glyph offset
+//by its advance values.
+//This allows for easy display of a single logical string with multiple calls
+//to ShowText.
+//
+//Note
+//
+//ShowText is part of the toy api.
+//See ShowGlyphs for the "real" text display api.
+//
+//Originally cairo_show_text.
+func (c *Context) ShowText(s string) *Context { //BUG(jmf): what if there is no current point before calling ShowText?
+	cs := C.CString(s)
+	C.cairo_show_text(c.c, cs)
+	C.free(unsafe.Pointer(cs))
+	return c
+}
+
+//ShowGlyphs draws a shape generated from gylphs rendered according
+//to the current Font, font matrix, and FontOptions.
+//
+//Originally cairo_show_glyphs.
+func (c *Context) ShowGlyphs(glyphs []Glyph) *Context {
+	gs, n := glyphsC(glyphs)
+	C.cairo_show_glyphs(c.c, gs, n)
+	return c
+}
+
+//ShowTextGlyphs renders similarly to ShowGlyphs but, if the target surface
+//support it, uses the provided text and cluster mapping to embed the text
+//for the glyphs shown in the output.
+//If the target surface does not support the extended attributes, this method
+//behaves exactly as ShowGlyphs(glyphs).
+//
+//The mapping between s and glyphs is provided by clusters.
+//Each cluster covers a number of text bytes and glyphs, and neighboring
+//clusters cover neighboring areas of s and glyphs.
+//The clusters should collectively cover s and glyphs in entirety.
+//
+//The first cluster always covers bytes from the beginning of s.
+//If flags do not have TextClusterBackward set, the first cluster also covers
+//the beginning of glyphs, otherwise it covers the end of the glyphs array and
+//following clusters move backward.
+//
+//Originally cairo_show_text_glyphs.
+func (c *Context) ShowTextGlyphs(s string, glyphs []Glyph, clusters []TextCluster, flags textClusterFlags) *Context {
+	gs, gn := glyphsC(glyphs)
+	ts, tn := clustersC(clusters)
+	cs, cn := C.CString(s), C.int(len(s))
+	C.cairo_show_text_glyphs(c.c, cs, cn, gs, gn, ts, tn, flags.c())
+	C.free(unsafe.Pointer(cs))
+	return c
+}
+
+//FontExtents returns the extents of the currently selected font.
+//
+//Originally cairo_font_extents.
+func (c *Context) FontExtents() FontExtents {
+	var f C.cairo_font_extents_t
+	C.cairo_font_extents(c.c, &f)
+	return newFontExtents(f)
+}
+
+//TextExtents reports the extents for s.
+//The extents describe a user-space rectangle that encloses the "inked" portion
+//of the text, as it would be drawn with ShownText.
+//Additionally, the x_advance and y_advance values indicate the amount by which
+//the current point would be advanced by ShowText.
+//
+//Note that whitespace characters do not directly contribute to the size
+//of the rectangle (extents.Width and extents.Height), but they do contribute
+//indirectly by changing the position of non-whitespace characters.
+//In particular, trailing whitespace characters are likely to not affect
+//the size of the rectangle, though they will affect the AdvanceX and AdvanceY
+//values.
+//
+//Originally cairo_text_extents.
+func (c *Context) TextExtents(s string) TextExtents {
+	var t C.cairo_text_extents_t
+	cs := C.CString(s)
+	C.cairo_text_extents(c.c, cs, &t)
+	C.free(unsafe.Pointer(cs))
+	return newTextExtents(t)
+}
+
+//GlyphExtents reports the extents for glyphs.
+//
+//The extents describe a user-space rectangle that encloses the "inked" portion
+//of the text, as it would be drawn with ShownText.
+//Additionally, the x_advance and y_advance values indicate the amount by which
+//the current point would be advanced by ShowText.
+//
+//Note that whitespace characters do not directly contribute to the size
+//of the rectangle (extents.Width and extents.Height), but they do contribute
+//indirectly by changing the position of non-whitespace characters.
+//In particular, trailing whitespace characters are likely to not affect
+//the size of the rectangle, though they will affect the AdvanceX and AdvanceY
+//values.
+//
+//Originally cairo_glyph_extents.
+func (c *Context) GlyphExtents(glyphs []Glyph) TextExtents {
+	var t C.cairo_text_extents_t
+	gs, n := glyphsC(glyphs)
+	C.cairo_glyph_extents(c.c, gs, n, &t)
+	return newTextExtents(t)
 }
