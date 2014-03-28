@@ -12,7 +12,7 @@ type Device interface {
 	Resource
 
 	Type() deviceType
-	Error() error
+	Err() error
 }
 
 type cairoDevice struct {
@@ -47,7 +47,7 @@ func (c *cairoDevice) Close() error {
 	return err
 }
 
-func (c *cairoDevice) Error() error {
+func (c *cairoDevice) Err() error {
 	return toerr(C.cairo_device_status(c.d))
 }
 
