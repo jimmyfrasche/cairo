@@ -426,13 +426,57 @@ func NewToyFont(family string, slant slant, weight weight) ToyFont {
 	return cNewToyFont(f, family, slant, weight)
 }
 
+//A ScaledFont is a font scaled to a particular size and device resolution.
+//
+//ScaledFont is most useful for low-level font usage where a library
+//or application wants to cache a reference to a scaled font to speed up
+//computation of metrics.
+//
+//Originally cairo_scaled_font_t.
 type ScaledFont struct {
 	//TODO
 	f *C.cairo_scaled_font_t
 }
 
 func cNewScaledFont(f *C.cairo_scaled_font_t) *ScaledFont {
-	return nil //TODO
+	s := &ScaledFont{f}
+	runtime.SetFinalizer(f, (*ScaledFont).Close)
+	return s
+}
+
+//NewScaledFont creates a scaled font of f.
+//
+//The fontMatrix is the the font space to user space transformation matrix
+//for the font.
+//
+//The CTM is the user to device coordinate transformation matrix.
+//
+//Originally cairo_scaled_font_create.
+func NewScaledFont(f Font, fontMatrix, CTM Matrix, opts *FontOptions) (*ScaledFont, error) {
+
+	s := C.cairo_scaled_font_create(f.XtensionRaw(), &fontMatrix.m, &CTM.m, opts.fo)
+	S := cNewScaledFont(s)
+	return S, S.Err()
+}
+
+//Err reports any error on s.
+//
+//Originally cairo_scaled_font_status.
+func (s *ScaledFont) Err() error {
+	return toerr(C.cairo_scaled_font_status(s.f))
+}
+
+//Close frees the resources of s.
+//
+//Originally cairo_scaled_font_destroy.
+func (s *ScaledFont) Close() error {
+	if s == nil || s.f == nil {
+		return nil
+	}
+	err := s.Err()
+	runtime.SetFinalizer(s, nil)
+	C.cairo_scaled_font_destroy(s.f)
+	return err
 }
 
 //Originally cairo_text_cluster_t.
