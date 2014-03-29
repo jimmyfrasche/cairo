@@ -485,5 +485,12 @@ type TextCluster struct {
 }
 
 func clustersC(tcs []TextCluster) (*C.cairo_text_cluster_t, C.int) {
-	return nil, 0 //TODO
+	n := len(tcs)
+	var t C.cairo_text_cluster_t
+	cs := (*C.cairo_text_cluster_t)(C.malloc(C.size_t(uintptr(n) * unsafe.Sizeof(t))))
+	iter := (*[1 << 30]C.cairo_text_cluster_t)(unsafe.Pointer(cs))[:n:n]
+	for i, t := range tcs {
+		iter[i] = C.cairo_text_cluster_t{C.int(t.RuneLength), C.int(t.NumGlyphs)}
+	}
+	return cs, C.int(n)
 }
