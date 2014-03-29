@@ -24,9 +24,7 @@ type FontOptions struct {
 //
 //Originally cairo_font_options_create.
 func NewFontOptions() *FontOptions {
-	fo := &FontOptions{C.cairo_font_options_create()}
-	runtime.SetFinalizer(fo, (*FontOptions).Close)
-	return fo
+	return initFontOptions(C.cairo_font_options_create())
 }
 
 func initFontOptions(opt *C.cairo_font_options_t) *FontOptions {
@@ -42,10 +40,11 @@ func (f *FontOptions) Close() error {
 	if f == nil || f.fo == nil {
 		return nil
 	}
+	err := f.Err()
 	C.cairo_font_options_destroy(f.fo)
 	f.fo = nil
 	runtime.SetFinalizer(f, nil)
-	return nil
+	return err
 }
 
 //Error queries f to see if there is an error.
@@ -288,20 +287,143 @@ func (g Glyph) c() C.cairo_glyph_t {
 	return out
 }
 
+//Font specifies all aspects of a font other than the size or font matrix.
+//
+//All methods are documented on XtensionFont
+//
+//Originally cairo_font_face_t.
 type Font interface {
 	Type() fontType
 	Close() error
 	Err() error
-	//TODO
 	XtensionRaw() *C.cairo_font_face_t
 }
 
+//XtensionFont is the "base class" of cairo fonts.
+//
+//It is meant only for embedding in new font types and should NEVER
+//be used directly.
 type XtensionFont struct {
 	f *C.cairo_font_face_t
 }
 
+//NewXtensionFont creates a base go font from a c font face.
+//
+//This is only for extension builders.
+func NewXtensionFont(f *C.cairo_font_face_t) *XtensionFont {
+	x := &XtensionFont{
+		f: f,
+	}
+	runtime.SetFinalizer(f, (*XtensionFont).Close)
+	return x
+}
+
+var cfonttogofont = map[fontType]func(*C.cairo_font_face_t) (Font, error){
+	FontTypeToy: newToyFont,
+}
+
+//XtensionRegisterRawToFont registers a factory to convert a libcairo
+//font face into a properly formed cairo Font of the appropriate
+//underlying type.
+//
+//It is mandatory for extensions defining new font types to call this
+//during init, otherwise users will get random not implemented panics
+//for your font.
+func XtensionRegisterRawToFont(t fontType, f func(*C.cairo_font_face_t) (Font, error)) {
+	cfonttogofont[t] = f
+}
+
 func cFont(f *C.cairo_font_face_t) (Font, error) {
-	return nil, nil //TODO
+	t := fontType(C.cairo_font_face_get_type(f))
+	fac, ok := cfonttogofont[t]
+	if !ok {
+		panic("No C → Go font converter registered for " + t.String())
+	}
+	F, err := fac(f)
+	if err != nil {
+		return nil, err
+	}
+	err = F.Err()
+	if err != nil {
+		return nil, err
+	}
+	return F, nil
+}
+
+//Originally cairo_font_face_get_type.
+func (f *XtensionFont) Type() fontType {
+	return fontType(C.cairo_font_face_get_type(f.f))
+}
+
+//Close frees the resources used by this font.
+//
+//Originally cairo_font_face_destroy.
+func (f *XtensionFont) Close() error {
+	if f == nil || f.f == nil {
+		return nil
+	}
+	err := f.Err()
+	C.cairo_font_face_destroy(f.f)
+	f.f = nil
+	runtime.SetFinalizer(f, nil)
+	return err
+}
+
+//Err reports any errors on this font.
+//
+//Originally cairo_font_face_status.
+func (f *XtensionFont) Err() error {
+	return toerr(C.cairo_font_face_status(f.f))
+}
+
+//XtensionRaw return the raw cairo_font_face_t pointer.
+//
+//XtensionRaw is only meant for creating new font types and should NEVER
+//be used directly.
+func (f *XtensionFont) XtensionRaw() *C.cairo_font_face_t {
+	return f.f
+}
+
+//ToyFont is a Font created by the libcairo "toy" font API.
+//
+//See Context.SelectFace for more details.
+type ToyFont struct {
+	*XtensionFont
+	slant  slant
+	weight weight
+	family string
+}
+
+func cNewToyFont(f *C.cairo_font_face_t, family string, s slant, w weight) ToyFont {
+	return ToyFont{
+		XtensionFont: NewXtensionFont(f),
+		slant:        s,
+		weight:       w,
+		family:       family,
+	}
+}
+
+func newToyFont(f *C.cairo_font_face_t) (Font, error) {
+	family := C.GoString(C.cairo_toy_font_face_get_family(f))
+	s := slant(C.cairo_toy_font_face_get_slant(f))
+	w := weight(C.cairo_toy_font_face_get_weight(f))
+	F := cNewToyFont(f, family, s, w)
+	return F, F.Err()
+}
+
+//NewToyFont creates a toy font of the given family, slant, and weight.
+//
+//If family is "", the default toy font for the given platform will be used,
+//typically sans-serif.
+//
+//See Context.SelectFont for more details.
+//
+//Originally cairo_toy_font_face_create.
+func NewToyFont(family string, slant slant, weight weight) ToyFont {
+	s := C.CString(family)
+	f := C.cairo_toy_font_face_create(s, slant.c(), weight.c())
+	C.free(unsafe.Pointer(s))
+	return cNewToyFont(f, family, slant, weight)
 }
 
 type ScaledFont struct {
