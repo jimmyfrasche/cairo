@@ -17,7 +17,7 @@ type ImageSurface struct {
 
 func newImg(s *C.cairo_surface_t, format format, width, height, stride int) (ImageSurface, error) {
 	S := ImageSurface{
-		XtensionSurface: XtensionNewSurface(s),
+		XtensionSurface: NewXtensionSurface(s),
 		format:          format,
 		width:           width,
 		height:          height,

@@ -26,7 +26,7 @@ type Surface struct {
 
 func news(s *C.cairo_surface_t, eps bool) (Surface, error) {
 	S := Surface{
-		XtensionPagedVectorSurface: cairo.XtensionNewPagedVectorSurface(s),
+		XtensionPagedVectorSurface: cairo.NewXtensionPagedVectorSurface(s),
 		eps: eps,
 	}
 	return S, S.Err()

@@ -45,6 +45,8 @@ func cSurface(s *C.cairo_surface_t) (Surface, error) {
 //To draw to a Surface, create a Context with the surface as the target.
 //
 //All methods are documented on XtensionSurface.
+//
+//Originally cairo_surface_t.
 type Surface interface {
 	CreateSimilar(c content, w, h int) (Surface, error)
 	CreateSimilarImage(f format, w, h int) (ImageSurface, error)
@@ -124,10 +126,10 @@ type XtensionSurface struct {
 	s *C.cairo_surface_t
 }
 
-//XtensionNewSurface creates a base go surface from a c surface.
+//NewXtensionSurface creates a base go surface from a c surface.
 //
 //This is only for extension builders.
-func XtensionNewSurface(s *C.cairo_surface_t) (x *XtensionSurface) {
+func NewXtensionSurface(s *C.cairo_surface_t) (x *XtensionSurface) {
 	x = &XtensionSurface{s}
 	runtime.SetFinalizer(x, (*XtensionSurface).Close)
 	return
@@ -255,7 +257,7 @@ func (e *XtensionSurface) DeviceOffset() (vector Point) {
 //Originally cairo_surface_create_similar.
 func (e *XtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
 	s := C.cairo_surface_create_similar(e.s, c.c(), C.int(w), C.int(h))
-	o := XtensionNewSurface(s)
+	o := NewXtensionSurface(s)
 	return o, o.Err()
 }
 
@@ -271,7 +273,7 @@ func (e *XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, 
 	s := C.cairo_surface_create_similar_image(e.s, f.c(), C.int(w), C.int(h))
 	stride := int(C.cairo_image_surface_get_stride(s))
 	o := ImageSurface{
-		XtensionSurface: XtensionNewSurface(s),
+		XtensionSurface: NewXtensionSurface(s),
 		format:          f,
 		width:           w,
 		height:          h,
@@ -298,7 +300,7 @@ func (e *XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, 
 func (e *XtensionSurface) CreateSubsurface(r Rectangle) (s Surface, err error) {
 	x0, y0, x1, y1 := r.Canon().c()
 	ss := C.cairo_surface_create_for_rectangle(e.s, x0, y0, x1, y1)
-	o := XtensionNewSurface(ss)
+	o := NewXtensionSurface(ss)
 	return o, o.Err()
 }
 
@@ -321,11 +323,11 @@ type XtensionVectorSurface struct {
 	*XtensionSurface
 }
 
-//XtensionNewVectorSurface creates a base go vector surface from a c surface.
+//NewXtensionVectorSurface creates a base go vector surface from a c surface.
 //
 //This is only for extension builders.
-func XtensionNewVectorSurface(s *C.cairo_surface_t) XtensionVectorSurface {
-	return XtensionVectorSurface{XtensionNewSurface(s)}
+func NewXtensionVectorSurface(s *C.cairo_surface_t) XtensionVectorSurface {
+	return XtensionVectorSurface{NewXtensionSurface(s)}
 }
 
 //SetFallbackResolution sets the horizontal and vertical resolution
@@ -366,11 +368,11 @@ type XtensionPagedSurface struct {
 	*XtensionSurface
 }
 
-//XtensionNewPagedSurface creates a base go paged surface from a c surface.
+//NewXtensionPagedSurface creates a base go paged surface from a c surface.
 //
 //This is only for extension builders.
-func XtensionNewPagedSurface(s *C.cairo_surface_t) XtensionPagedSurface {
-	return XtensionPagedSurface{XtensionNewSurface(s)}
+func NewXtensionPagedSurface(s *C.cairo_surface_t) XtensionPagedSurface {
+	return XtensionPagedSurface{NewXtensionSurface(s)}
 }
 
 //CopyPage emits the current page, but does not clear it.
@@ -401,12 +403,12 @@ type XtensionPagedVectorSurface struct {
 	*XtensionSurface
 }
 
-//XtensionNewPagedVectorSurface creates a base go paged vector surface
+//NewXtensionPagedVectorSurface creates a base go paged vector surface
 //from a c surface.
 //
 //This is only for extension builders.
-func XtensionNewPagedVectorSurface(s *C.cairo_surface_t) XtensionPagedVectorSurface {
-	return XtensionPagedVectorSurface{XtensionNewSurface(s)}
+func NewXtensionPagedVectorSurface(s *C.cairo_surface_t) XtensionPagedVectorSurface {
+	return XtensionPagedVectorSurface{NewXtensionSurface(s)}
 }
 
 //SetFallbackResolution is documented on XtensionVectorSurface.

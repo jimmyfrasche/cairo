@@ -34,7 +34,7 @@ func NewFile(filename string, width, height float64) (Surface, error) {
 	svg := C.cairo_svg_surface_create(nm, C.double(width), C.double(height))
 	C.free(unsafe.Pointer(nm))
 	s := Surface{
-		XtensionVectorSurface: cairo.XtensionNewVectorSurface(svg),
+		XtensionVectorSurface: cairo.NewXtensionVectorSurface(svg),
 	}
 	return s, s.Err()
 }
@@ -52,7 +52,7 @@ func New(w io.Writer, width, height float64) (Surface, error) {
 	wp := unsafe.Pointer(&w)
 	svg := C.cairo_svg_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	s := Surface{
-		XtensionVectorSurface: cairo.XtensionNewVectorSurface(svg),
+		XtensionVectorSurface: cairo.NewXtensionVectorSurface(svg),
 		w: w,
 	}
 	return s, s.Err()
@@ -62,7 +62,7 @@ func cNew(s *C.cairo_surface_t) (cairo.Surface, error) {
 	//Note that if the surface was created with an io.Writer we have no way of
 	//getting it here but that's okay as long as the original reference lives on.
 	S := Surface{
-		XtensionVectorSurface: cairo.XtensionNewVectorSurface(s),
+		XtensionVectorSurface: cairo.NewXtensionVectorSurface(s),
 	}
 	return S, S.Err()
 }
