@@ -53,7 +53,7 @@ func XtensionRevivifySurface(s *C.cairo_surface_t) (Surface, error) {
 //
 //Originally cairo_surface_t.
 type Surface interface {
-	CreateSimilar(c content, w, h int) (Surface, error)
+	CreateSimilar(c Content, w, h int) (Surface, error)
 	CreateSimilarImage(f format, w, h int) (ImageSurface, error)
 	CreateSubsurface(r Rectangle) (Surface, error)
 
@@ -61,7 +61,7 @@ type Surface interface {
 	Close() error
 	Flush() error
 
-	Content() content
+	Content() Content
 	Device() (Device, error)
 
 	FontOptions() *FontOptions
@@ -231,8 +231,8 @@ func (e *XtensionSurface) Device() (Device, error) {
 //Content reports the content of the surface.
 //
 //Originally cairo_surface_get_content.
-func (e *XtensionSurface) Content() content {
-	return content(C.cairo_surface_get_content(e.s))
+func (e *XtensionSurface) Content() Content {
+	return Content(C.cairo_surface_get_content(e.s))
 }
 
 //HasShowTextGlyphs reports whether this surface uses provided text and cluster
@@ -296,7 +296,7 @@ func (e *XtensionSurface) DeviceOffset() (vector Point) {
 //have transparency, black otherwise.)
 //
 //Originally cairo_surface_create_similar.
-func (e *XtensionSurface) CreateSimilar(c content, w, h int) (Surface, error) {
+func (e *XtensionSurface) CreateSimilar(c Content, w, h int) (Surface, error) {
 	s := C.cairo_surface_create_similar(e.s, c.c(), C.int(w), C.int(h))
 	o := NewXtensionSurface(s)
 	return o, o.Err()

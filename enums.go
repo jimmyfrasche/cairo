@@ -76,28 +76,30 @@ func (a antialias) String() string {
 	return s + " antialiasing"
 }
 
-//cairo_content_t
-type content int
-
 //Content is used to describe the content that a surface will contain, whether
 //color information, alpha (translucence vs. opacity), or both.
 //
+//Note that this type is only exposed as some extensions require it and that
+//
+//
 //Originally cairo_content_t.
+type Content int
+
 const (
 	//ContentColor specifies that the surface will hold color content only.
-	ContentColor content = C.CAIRO_CONTENT_COLOR
+	ContentColor Content = C.CAIRO_CONTENT_COLOR
 	//ContentAlpha specifies that the surface will hold alpha content only.
-	ContentAlpha content = C.CAIRO_CONTENT_ALPHA
+	ContentAlpha Content = C.CAIRO_CONTENT_ALPHA
 	//ContentColorAlpha specifies that the surface will hold color and alpha
 	//content.
-	ContentColorAlpha content = C.CAIRO_CONTENT_COLOR_ALPHA
+	ContentColorAlpha Content = C.CAIRO_CONTENT_COLOR_ALPHA
 )
 
-func (con content) c() C.cairo_content_t {
+func (con Content) c() C.cairo_content_t {
 	return C.cairo_content_t(con)
 }
 
-func (c content) String() string {
+func (c Content) String() string {
 	switch c {
 	case ContentColor:
 		return "Color content only"
@@ -131,6 +133,8 @@ const (
 	DeviceTypeDRM deviceType = C.CAIRO_DEVICE_TYPE_DRM
 	//DeviceTypeGL is an OpenGL device.
 	DeviceTypeGL deviceType = C.CAIRO_DEVICE_TYPE_GL
+	//DeviceTypeScript is a script recording pseudo-Device.
+	DeviceTypeScript deviceType = C.CAIRO_DEVICE_TYPE_SCRIPT
 	//DeviceTypeXCB is an XCB device.
 	DeviceTypeXCB deviceType = C.CAIRO_DEVICE_TYPE_XCB
 	//DeviceTypeXLib is an X lib device.
@@ -144,13 +148,14 @@ const (
 )
 
 var devstr = map[deviceType]string{
-	DeviceTypeDRM:   "DRM",
-	DeviceTypeGL:    "OpenGL",
-	DeviceTypeXCB:   "XCB",
-	DeviceTypeXLib:  "Xlib",
-	DeviceTypeXML:   "XML",
-	DeviceTypeCogl:  "Cogl",
-	DeviceTypeWin32: "Win32",
+	DeviceTypeDRM:    "DRM",
+	DeviceTypeGL:     "OpenGL",
+	DeviceTypeScript: "Script",
+	DeviceTypeXCB:    "XCB",
+	DeviceTypeXLib:   "Xlib",
+	DeviceTypeXML:    "XML",
+	DeviceTypeCogl:   "Cogl",
+	DeviceTypeWin32:  "Win32",
 }
 
 func (d deviceType) String() string {
@@ -177,7 +182,7 @@ func (d deviceType) GL() bool {
 
 //Pseudo returns true for pseudodevices (eg, XML).
 func (d deviceType) Pseudo() bool {
-	return d == DeviceTypeXML
+	return d == DeviceTypeXML || d == DeviceTypeScript
 }
 
 //cairo_extend_t
@@ -962,6 +967,9 @@ const (
 	//SurfaceTypeQuartz is a Quartz surface.
 	SurfaceTypeQuartz surfaceType = C.CAIRO_SURFACE_TYPE_QUARTZ
 
+	//SurfaceTypeScript is a script surface.
+	SurfaceTypeScript surfaceType = C.CAIRO_SURFACE_TYPE_SCRIPT
+
 	//SurfaceTypeWin32 is a Win32 surface
 	SurfaceTypeWin32 surfaceType = C.CAIRO_SURFACE_TYPE_WIN32
 
@@ -1045,6 +1053,8 @@ func (t surfaceType) String() string {
 		s = "Win32 printing"
 	case SurfaceTypeQuartzImage:
 		s = "Quartz image"
+	case SurfaceTypeScript:
+		s = "Script"
 	case SurfaceTypeQT:
 		s = "QT"
 	case SurfaceTypeRecording:

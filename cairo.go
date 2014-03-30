@@ -181,7 +181,7 @@ func (c *Context) PushGroup() *Context {
 //See the documentation for PushGroup for more information.
 //
 //Originally cairo_push_group_with_content.
-func (c *Context) PushGroupWithContent(content content) *Context {
+func (c *Context) PushGroupWithContent(content Content) *Context {
 	C.cairo_push_group_with_content(c.c, content.c())
 	return c
 }
