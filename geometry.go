@@ -9,6 +9,9 @@ import (
 
 //Point is an X, Y coordinate pair.
 //The axes increase right and down.
+//
+//When a Point is used as a vector, it is considered as a line segment from (0, 0) to
+//(X, Y).
 type Point struct {
 	X, Y float64
 }
@@ -43,7 +46,12 @@ func (p Point) String() string {
 	return "(" + floatstr(p.X) + "," + floatstr(p.Y) + ")"
 }
 
-//Add returns the vector p+q.
+//Conj returns (-x, -y) the conjugate of (x, y).
+func (p Point) Conj() Point {
+	return Pt(-p.X, -p.Y)
+}
+
+//Add returns the vector p-q.
 func (p Point) Add(q Point) Point {
 	return Point{p.X + q.X, p.Y + q.Y}
 }
@@ -53,9 +61,14 @@ func (p Point) Sub(q Point) Point {
 	return Point{p.X - q.X, p.Y - q.Y}
 }
 
-//Mul returns the vector p*k.
+//Mul returns the vector k*p.
 func (p Point) Mul(k float64) Point {
 	return Point{p.X * k, p.Y * k}
+}
+
+//Dot returns the dot product of p and q.
+func (p Point) Dot(q Point) float64 {
+	return p.X*q.X + p.Y*q.Y
 }
 
 //Div returns the vector p/k.
@@ -73,9 +86,14 @@ func (p Point) Near(q Point, ε float64) bool {
 	return math.Abs(p.X-q.X) < ε && math.Abs(p.Y-q.Y) < ε
 }
 
-//Hypot returns Sqrt(p.X*p.X + p.Y+p.Y)
-func (p Point) Hypot() float64 {
+//Mag returns the length of the vector Sqrt(p.X*p.X + p.Y+p.Y).
+func (p Point) Mag() float64 {
 	return math.Hypot(p.X, p.Y)
+}
+
+//Norm returns the unit-length vector with the same direction as p.
+func (p Point) Norm() (n Point) {
+	return p.Div(p.Mag())
 }
 
 //Angle returns the angle of the vector in radians.
