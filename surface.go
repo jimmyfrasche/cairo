@@ -5,6 +5,7 @@ package cairo
 import "C"
 
 import (
+	"image"
 	"runtime"
 )
 
@@ -67,6 +68,8 @@ type Surface interface {
 	Type() surfaceType
 
 	HasShowTextGlyphs() bool
+
+	MapImage(r image.Rectangle) (mappedImageSurface, error)
 
 	//XtensionRaw is ONLY for adding libcairo subsystems outside this package.
 	//Otherwise just ignore.
@@ -141,6 +144,42 @@ func NewXtensionSurface(s *C.cairo_surface_t) (x *XtensionSurface) {
 //be used directly.
 func (e *XtensionSurface) XtensionRaw() *C.cairo_surface_t {
 	return e.s
+}
+
+//MapImage returns an image surface that is the most efficient mechanism
+//for modifying the backing store of this surface.
+//
+//If r is Empty, the entire surface is mapped, otherwise, just the region
+//described by r is mapped.
+//
+//Note that r is an image.Rectangle and not a cairo.Rectangle.
+//
+//It is the callers responsibility to all Close on the returned surface
+//in order to upload the content of the mapped image to this surface and
+//destroys the image surface.
+//
+//The returned surface is an ImageSurface with a special Close method.
+//
+//Warning
+//
+//Using this surface as a target or source while mapped is undefined.
+//
+//The result of mapping a surface multiple times is undefined.
+//
+//Changing the device transform of either surface before the image surface
+//is unmapped is undefined.
+//
+//Originally cairo_surface_map_to_image.
+func (e *XtensionSurface) MapImage(r image.Rectangle) (mappedImageSurface, error) {
+	var rect C.cairo_rectangle_int_t
+	rect.x, rect.y = C.int(r.Min.X), C.int(r.Min.Y)
+	rect.width, rect.height = C.int(r.Dx()), C.int(r.Dy())
+	rp := &rect
+	if r.Empty() {
+		//use entire image
+		rp = nil
+	}
+	return newMappedImageSurface(C.cairo_surface_map_to_image(e.s, rp), e.s)
 }
 
 //Err reports any errors on the surface.

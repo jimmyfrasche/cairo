@@ -6,6 +6,7 @@ package cairo
 import "C"
 
 import (
+	"runtime"
 	"unsafe"
 )
 
@@ -84,4 +85,39 @@ func (i ImageSurface) Height() int {
 //Originally cairo_image_surface_get_stride.
 func (i ImageSurface) Stride() int {
 	return i.stride
+}
+
+type mappedImageSurface struct {
+	ImageSurface
+	from *C.cairo_surface_t
+}
+
+func newMappedImageSurface(s, from *C.cairo_surface_t) (m mappedImageSurface, err error) {
+	im, err1 := cNewImageSurface(s)
+	if err1 != nil {
+		err = err1
+		return
+	}
+	//Clear default finalizer so GC doesn't call surface_destroy.
+	//We do not set a new finalizer on mappedImageSurface.Close,
+	//because that would not do the right thing and the user is expected to close
+	//manually when done.
+	runtime.SetFinalizer(m.XtensionSurface, nil)
+	m = mappedImageSurface{
+		ImageSurface: im.(ImageSurface),
+		from:         from,
+	}
+	err = m.Err()
+	if err != nil {
+		m.s = nil
+	}
+	return
+}
+
+func (m mappedImageSurface) Close() error {
+	err := m.Err()
+	C.cairo_surface_unmap_image(m.from, m.s)
+	m.from = nil
+	m.s = nil
+	return err
 }
