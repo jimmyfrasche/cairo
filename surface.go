@@ -23,7 +23,11 @@ func XtensionRegisterRawToSurface(t surfaceType, f func(*C.cairo_surface_t) (Sur
 	csurftogosurf[t] = f
 }
 
-func cSurface(s *C.cairo_surface_t) (Surface, error) {
+//XtensionRevivifySurface recreates a Go Surface of the proper type
+//from a C surface.
+//
+//This is for extension writers only.
+func XtensionRevivifySurface(s *C.cairo_surface_t) (Surface, error) {
 	t := surfaceType(C.cairo_surface_get_type(s))
 	f, ok := csurftogosurf[t]
 	if !ok {

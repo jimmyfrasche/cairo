@@ -237,7 +237,7 @@ func (c *Context) GroupTarget() (Surface, error) {
 	//XXX should we track group depth and return c.Target(), nil if 0?
 	s := C.cairo_get_group_target(c.c)
 	s = C.cairo_surface_reference(s)
-	return cSurface(s)
+	return XtensionRevivifySurface(s)
 }
 
 //SetSourceColor sets the source pattern to col.

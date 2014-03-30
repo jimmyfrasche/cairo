@@ -213,7 +213,7 @@ func cNewSurfacePattern(p *C.cairo_pattern_t) (Pattern, error) {
 	var s *C.cairo_surface_t
 	C.cairo_pattern_get_surface(p, &s)
 	C.cairo_surface_reference(s) //returned surface does not up libcairo refcount
-	S, err := cSurface(p)
+	S, err := XtensionRevivifySurface(p)
 	if err != nil {
 		return nil, err
 	}
