@@ -51,10 +51,14 @@ type Device interface {
 	Lock() error
 	Unlock()
 	Flush()
+	XtensionRaw() *C.cairo_device_t
 }
 
 //XtensionDevice is the "base class" and default implementation for libcairo
 //devices.
+//
+//Unless a particular type of device exposes special operations on the device,
+//it will be an object of this type regardless of its deviceType.
 //
 //Originally cairo_device_t.
 type XtensionDevice struct {
@@ -154,4 +158,8 @@ func (c *XtensionDevice) Type() deviceType {
 //Originally cairo_device_flush.
 func (c *XtensionDevice) Flush() {
 	C.cairo_device_flush(c.d)
+}
+
+func (c *XtensionDevice) XtensionRaw() *C.cairo_device_t {
+	return c.d
 }
