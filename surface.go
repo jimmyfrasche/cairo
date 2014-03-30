@@ -58,7 +58,7 @@ type Surface interface {
 	Flush() error
 
 	Content() content
-	Device() Device
+	Device() (Device, error)
 
 	FontOptions() *FontOptions
 
@@ -220,7 +220,7 @@ func (e *XtensionSurface) Type() surfaceType {
 //Device reports the device of this surface.
 //
 //Originally cairo_surface_get_device.
-func (e *XtensionSurface) Device() Device {
+func (e *XtensionSurface) Device() (Device, error) {
 	return newCairoDevice(C.cairo_surface_get_device(e.s))
 }
 
