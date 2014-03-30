@@ -87,6 +87,13 @@ func errChk(header, setup Comments) (err error) {
 //Header is any DSC comments to apply to the header section.
 //Setup is any DSC comment to apply to the setup section.
 //
+//Warning
+//
+//It is the caller's responsibility to keep a reference to w for the lifetime
+//of this surface.
+//As it is passed to libcairo, the Go garbage collector will otherwise find
+//no reference to it.
+//
 //Originally cairo_ps_surface_create_for_stream
 //and cairo_ps_surface_set_eps and cairo_ps_surface_dsc_comment
 //and cairo_ps_surface_dsc_begin_setup and
