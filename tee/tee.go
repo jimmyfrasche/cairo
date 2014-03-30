@@ -33,6 +33,15 @@ func New(masterSurface cairo.Surface, surfaces ...cairo.Surface) (Surface, error
 	return S, S.Err()
 }
 
+func cNew(m *C.cairo_surface_t) (cairo.Surface, error) {
+	S := Surface{cairo.NewXtensionPagedVectorSurface(m)}
+	return S, S.Err()
+}
+
+func init() {
+	cairo.XtensionRegisterRawToSurface(cairo.SurfaceTypeTee, cNew)
+}
+
 //Index returns the ith surface of this tee.
 //
 //The returned error is set if there's an error on the returned surface.
