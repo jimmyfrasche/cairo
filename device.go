@@ -9,10 +9,11 @@ import (
 )
 
 type Device interface {
-	Resource
-
 	Type() deviceType
 	Err() error
+	Close() error
+	Lock() error
+	Unlock()
 }
 
 type cairoDevice struct {

@@ -76,8 +76,6 @@ type Surface interface {
 	XtensionRaw() *C.cairo_surface_t
 }
 
-//BUG(jmf): Surface: how to handle map/unmap
-
 //BUG(jmf): Surface: how to handle mime stuff?
 
 //VectorBacked is the set of methods available to a surface
