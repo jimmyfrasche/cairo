@@ -524,7 +524,7 @@ func (c *Context) MiterLimit() float64 {
 //SetOperator sets the compositing operator used for all drawing operations.
 //
 //Originally cairo_set_operator.
-func (c *Context) SetOperator(op op) *Context {
+func (c *Context) SetOperator(op operator) *Context {
 	C.cairo_set_operator(c.c, op.c())
 	return c
 }
@@ -532,8 +532,8 @@ func (c *Context) SetOperator(op op) *Context {
 //Operator reports the current compositing operator.
 //
 //Originally cairo_get_operator.
-func (c *Context) Operator() op {
-	return op(C.cairo_get_operator(c.c))
+func (c *Context) Operator() operator {
+	return operator(C.cairo_get_operator(c.c))
 }
 
 //SetTolerance sets the tolerance, in device units, when converting paths into

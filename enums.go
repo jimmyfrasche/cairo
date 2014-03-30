@@ -620,9 +620,9 @@ func (l lineJoin) String() string {
 }
 
 //cairo_operator_t
-type op int
+type operator int
 
-//An op sets the compositing operator for all cairo drawing operations.
+//An operator sets the compositing operator for all cairo drawing operations.
 //
 //The operators marked as unbounded modify their destination even outside
 //of the mask layer (that is, their effect is not bound by the mask layer).
@@ -639,112 +639,112 @@ type op int
 //Originally cairo_operator_t.
 const (
 	//OpClear clears destination layer (bounded).
-	OpClear op = C.CAIRO_OPERATOR_CLEAR
+	OpClear operator = C.CAIRO_OPERATOR_CLEAR
 
 	//OpSource replaces destination layer (bounded).
-	OpSource op = C.CAIRO_OPERATOR_SOURCE
+	OpSource operator = C.CAIRO_OPERATOR_SOURCE
 
 	//OpOver draws source layer on top of destination layer (bounded).
-	OpOver op = C.CAIRO_OPERATOR_OVER
+	OpOver operator = C.CAIRO_OPERATOR_OVER
 
 	//OpIn draws source where there was destination content (unbounded).
-	OpIn op = C.CAIRO_OPERATOR_IN
+	OpIn operator = C.CAIRO_OPERATOR_IN
 
 	//OpOut draws source where there was no destination content (unounded).
-	OpOut op = C.CAIRO_OPERATOR_OUT
+	OpOut operator = C.CAIRO_OPERATOR_OUT
 
 	//OpAtop draws source on top of destination content and only there.
-	OpAtop op = C.CAIRO_OPERATOR_ATOP
+	OpAtop operator = C.CAIRO_OPERATOR_ATOP
 
 	//OpDest ignores the source.
-	OpDest op = C.CAIRO_OPERATOR_DEST
+	OpDest operator = C.CAIRO_OPERATOR_DEST
 
 	//OpDestOver draw destination on top of source.
-	OpDestOver op = C.CAIRO_OPERATOR_DEST_OVER
+	OpDestOver operator = C.CAIRO_OPERATOR_DEST_OVER
 
 	//OpDestIn leaves destination only where there was source content.
-	OpDestIn op = C.CAIRO_OPERATOR_DEST_IN
+	OpDestIn operator = C.CAIRO_OPERATOR_DEST_IN
 
 	//OpDestOut leaves destination only where there was no source content.
-	OpDestOut op = C.CAIRO_OPERATOR_DEST_OUT
+	OpDestOut operator = C.CAIRO_OPERATOR_DEST_OUT
 
 	//OpDestAtop leaves destination on top of source content and only there.
-	OpDestAtop op = C.CAIRO_OPERATOR_DEST_ATOP
+	OpDestAtop operator = C.CAIRO_OPERATOR_DEST_ATOP
 
 	//OpXor shows source and destination where there is only one of them.
-	OpXor op = C.CAIRO_OPERATOR_XOR
+	OpXor operator = C.CAIRO_OPERATOR_XOR
 
 	//OpAdd accumulates source and destination layers.
-	OpAdd op = C.CAIRO_OPERATOR_ADD
+	OpAdd operator = C.CAIRO_OPERATOR_ADD
 
 	//OpSaturate is like OpOver, but assumes source and dest are disjoint
 	//geometries.
-	OpSaturate op = C.CAIRO_OPERATOR_SATURATE
+	OpSaturate operator = C.CAIRO_OPERATOR_SATURATE
 
 	//OpMultiply multiplies source and destination layers.
 	//This causes the result to be at least as the darker inputs.
-	OpMultiply op = C.CAIRO_OPERATOR_MULTIPLY
+	OpMultiply operator = C.CAIRO_OPERATOR_MULTIPLY
 
 	//OpScreen complements and multiples source and destination.
 	//This causes the result to be as light as the lighter inputs.
-	OpScreen op = C.CAIRO_OPERATOR_SCREEN
+	OpScreen operator = C.CAIRO_OPERATOR_SCREEN
 
 	//OpOverlay multiplies or screens, depending on the lightness
 	//of the destination color.
-	OpOverlay op = C.CAIRO_OPERATOR_OVERLAY
+	OpOverlay operator = C.CAIRO_OPERATOR_OVERLAY
 
 	//OpDarken replaces the destination with source if is darker, otherwise
 	//keeps the source.
-	OpDarken op = C.CAIRO_OPERATOR_DARKEN
+	OpDarken operator = C.CAIRO_OPERATOR_DARKEN
 
 	//OpLighten replaces the destiantion with source if it is lighter, otherwise
 	//keeps the source.
-	OpLighten op = C.CAIRO_OPERATOR_LIGHTEN
+	OpLighten operator = C.CAIRO_OPERATOR_LIGHTEN
 
 	//OpColorDodge brightens the destination color to reflect the source color.
-	OpColorDodge op = C.CAIRO_OPERATOR_COLOR_DODGE
+	OpColorDodge operator = C.CAIRO_OPERATOR_COLOR_DODGE
 
 	//OpColorBurn darkens the destination color to reflect the source color.
-	OpColorBurn op = C.CAIRO_OPERATOR_COLOR_BURN
+	OpColorBurn operator = C.CAIRO_OPERATOR_COLOR_BURN
 
 	//OpHardLight multiplies or screens, dependent on source color.
-	OpHardLight op = C.CAIRO_OPERATOR_HARD_LIGHT
+	OpHardLight operator = C.CAIRO_OPERATOR_HARD_LIGHT
 
 	//OpSoftLight darkens or lightens, dependent on source color.
-	OpSoftLight op = C.CAIRO_OPERATOR_SOFT_LIGHT
+	OpSoftLight operator = C.CAIRO_OPERATOR_SOFT_LIGHT
 
 	//OpDifference takes the difference of the source and destination color.
-	OpDifference op = C.CAIRO_OPERATOR_DIFFERENCE
+	OpDifference operator = C.CAIRO_OPERATOR_DIFFERENCE
 
 	//OpExclusion produces an effect similar to difference, but with lower contrast.
-	OpExclusion op = C.CAIRO_OPERATOR_EXCLUSION
+	OpExclusion operator = C.CAIRO_OPERATOR_EXCLUSION
 
 	//OpHueHSL creates a color with the hue of the source and the saturation
 	//and luminosity of the target.
-	OpHueHSL op = C.CAIRO_OPERATOR_HSL_HUE
+	OpHueHSL operator = C.CAIRO_OPERATOR_HSL_HUE
 
 	//OpSaturationHSL creates a color with the saturation of the source
 	//and the hue and luminosity of the target.
 	//Painting with this mode onto a gray area produces no change.
-	OpSaturationHSL op = C.CAIRO_OPERATOR_HSL_SATURATION
+	OpSaturationHSL operator = C.CAIRO_OPERATOR_HSL_SATURATION
 
 	//OpColorHSL creates a color with the hue and saturation of the source
 	//and the luminosity of the target.
 	//This preserves the gray levels of the target and useful for coloring
 	//monochrome images or tinting color images.
-	OpColorHSL op = C.CAIRO_OPERATOR_HSL_COLOR
+	OpColorHSL operator = C.CAIRO_OPERATOR_HSL_COLOR
 
 	//OpLuminosityHSL creates a color with the luminosity of the source
 	//and the hue and saturation of the target.
 	//This produces an inverse effect to OpColorHSL.
-	OpLuminosityHSL op = C.CAIRO_OPERATOR_HSL_LUMINOSITY
+	OpLuminosityHSL operator = C.CAIRO_OPERATOR_HSL_LUMINOSITY
 )
 
-func (o op) c() C.cairo_operator_t {
+func (o operator) c() C.cairo_operator_t {
 	return C.cairo_operator_t(o)
 }
 
-func (o op) String() string {
+func (o operator) String() string {
 	s := ""
 	switch o {
 	case OpClear:
