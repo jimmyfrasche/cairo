@@ -1416,3 +1416,122 @@ func (c *Context) GlyphExtents(glyphs []Glyph) TextExtents {
 	C.cairo_glyph_extents(c.c, gs, n, &t)
 	return newTextExtents(t)
 }
+
+//Translate the current transformation matrix by vector v.
+//This offset is interpreted as a user-space coordinate according to the CTM
+//in place before the new call to Translate.
+//In other words, the translation of the user-space origin takes place after
+//any existing transformation.
+//
+//Originally cairo_translate.
+func (c *Context) Translate(v Point) *Context {
+	x, y := v.c()
+	C.cairo_translate(c.c, x, y)
+	return c
+}
+
+//Scale scales the current transformation matrix by v by scaling the user-space
+//axes by v.X and v.Y.
+//The scaling of the axes takes place after any existing transformation
+//of user space.
+//
+//Originally cairo_scale.
+func (c *Context) Scale(v Point) *Context {
+	x, y := v.c()
+	C.cairo_scale(c.c, x, y)
+	return c
+}
+
+//Rotate the current transformation matrix by θ by rotating the user-space
+//axes.
+//The rotation of the axes takes places after any existing transformation
+//of user space.
+//The rotation direction for positive angles is from the positive X axis toward
+//the positive Y axis.
+//
+//Originally cairo_rotate.
+func (c *Context) Rotate(θ float64) *Context {
+	C.cairo_rotate(c.c, C.double(θ))
+	return c
+}
+
+//Transform applies m to the current transformation matrix as an additional
+//transformation.
+//The new transformation of user space takes place after any existing
+//transformation.
+//
+//Originally cairo_transform.
+func (c *Context) Transfrom(m Matrix) *Context {
+	C.cairo_transform(c.c, &m.m)
+	return c
+}
+
+//SetMatrix sets the current transformation matrix to m.
+//
+//Originally cairo_set_matrix.
+func (c *Context) SetMatrix(m Matrix) *Context {
+	C.cairo_set_matrix(c.c, &m.m)
+	return c
+}
+
+//Matrix returns the current transformation matrix.
+//
+//Originally cairo_get_matrix.
+func (c *Context) Matrix() Matrix {
+	var m C.cairo_matrix_t
+	C.cairo_get_matrix(c.c, &m)
+	return Matrix{m}
+}
+
+//ResetMatrix resets the current transformation matrix to the identity
+//matrix.
+//
+//Originally cairo_identity_matrix.
+func (c *Context) ResetMatrix() *Context {
+	C.cairo_identity_matrix(c.c)
+	return c
+}
+
+//UserToDevice takes the point p from user space to the point q in device space
+//by multiplication with the current transformation matrix.
+//
+//Originally cairo_user_to_device.
+func (c *Context) UserToDevice(p Point) (q Point) {
+	x, y := p.c()
+	C.cairo_user_to_device(c.c, &x, &y)
+	return cPt(x, y)
+}
+
+//UserToDeviceDistance transforms a distance vector v from user to device
+//space.
+//This method is similar to UserToDevice, except that the translation
+//components of the current transformation matrix will be ignored.
+//
+//Originally cairo_user_to_device_distance.
+func (c *Context) UserToDeviceDistance(v Point) Point {
+	x, y := v.c()
+	C.cairo_user_to_device_distance(c.c, &x, &y)
+	return cPt(x, y)
+}
+
+//DeviceToUser takes the point p from device space to the point q in user space
+//by multiplication with the inverse of the current transformation matrix.
+//
+//Originally cairo_device_to_user.
+func (c *Context) DeviceToUser(p Point) (q Point) {
+	x, y := p.c()
+	C.cairo_device_to_user(c.c, &x, &y)
+	return cPt(x, y)
+}
+
+//DeviceToUserDistance transforms a distance vector v from device to user
+//space.
+//This method is similar to DeviceToUser, except that the translation
+//components of the current transformation matrix will be ignored.
+//
+//Originally cairo_device_to_user_distance.
+func (c *Context) DeviceToUserDistance(v Point) Point {
+	x, y := v.c()
+	C.cairo_device_to_user_distance(c.c, &x, &y)
+	return cPt(x, y)
+}
