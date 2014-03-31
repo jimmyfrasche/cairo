@@ -7,6 +7,7 @@ import "C"
 import (
 	"image"
 	"runtime"
+	"unsafe"
 )
 
 var csurftogosurf = map[surfaceType]func(*C.cairo_surface_t) (Surface, error){
@@ -78,6 +79,10 @@ type Surface interface {
 	//XtensionRaw is ONLY for adding libcairo subsystems outside this package.
 	//Otherwise just ignore.
 	XtensionRaw() *C.cairo_surface_t
+	//XtensionRegisterWriter is ONLY for adding libcairo subsystems outside
+	//this package.
+	//Otherwise just ignore.
+	XtensionRegisterWriter(unsafe.Pointer)
 }
 
 //BUG(jmf): Surface: how to handle mime stuff?

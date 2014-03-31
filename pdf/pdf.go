@@ -43,18 +43,13 @@ func init() {
 //Width and height are in the unit of a typographical point
 //(1 point = 1/72 inch).
 //
-//Warning
-//
-//It is the caller's responsibility to keep a reference to w for the lifetime
-//of this surface.
-//As it is passed to libcairo, the Go garbage collector will otherwise find
-//no reference to it.
-//
 //Originally cairo_pdf_surface_create_for_stream.
 func New(w io.Writer, width, height float64) (Surface, error) {
-	wp := unsafe.Pointer(&w)
+	wp := cairo.XtensionWrapWriter(w)
 	pdf := C.cairo_pdf_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
-	return news(pdf)
+	S, err := news(pdf)
+	S.XtensionRegisterWriter(wp)
+	return S, err
 }
 
 //NewFile creates a new PDF of the specified size.

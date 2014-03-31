@@ -34,18 +34,13 @@ func cNew(d *C.cairo_device_t, m mode, w io.Writer) (Device, error) {
 
 //New creates a script device from writer in mode.
 //
-//Warning
-//
-//It is the caller's responsibility to keep a reference to w for the lifetime
-//of this surface.
-//As it is passed to libcairo, the Go garbage collector will otherwise find
-//no reference to it.
-//
 //Originally cairo_script_create_for_stream.
 func New(w io.Writer, mode mode) (Device, error) {
-	wp := unsafe.Pointer(&w)
+	wp := cairo.XtensionWrapWriter(w)
 	d := C.cairo_script_create_for_stream(cairo.XtensionCairoWriteFuncT, wp)
-	return cNew(d, mode, w)
+	D, err := cNew(d, mode, w)
+	D.XtensionRegisterWriter(wp)
+	return D, err
 }
 
 //NewFile creates a device, in mode, that writes to filename.

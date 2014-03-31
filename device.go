@@ -6,6 +6,7 @@ import "C"
 
 import (
 	"runtime"
+	"unsafe"
 )
 
 var cdevtogodev = map[deviceType]func(*C.cairo_device_t) (Device, error){}
@@ -51,7 +52,10 @@ type Device interface {
 	Lock() error
 	Unlock()
 	Flush()
+
+	//only for writing extensions.
 	XtensionRaw() *C.cairo_device_t
+	XtensionRegisterWriter(w unsafe.Pointer)
 }
 
 //XtensionDevice is the "base class" and default implementation for libcairo
