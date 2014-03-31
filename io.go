@@ -41,6 +41,16 @@ import (
 	"unsafe"
 )
 
+//IOShutdowner provides a hook that cairo calls on io Readers and Writers
+//that are passed through to libcairo to respond to being no longer needed.
+//The error parameter is the error from the last read or write,
+//which may be nil.
+//
+//This is entirely optional.
+type IOShutdowner interface {
+	IOShutdown(error)
+}
+
 var (
 	wmap = map[*writer]struct{}{}
 	mux  = new(sync.Mutex)
@@ -96,6 +106,11 @@ func go_write_callback_reaper(w unsafe.Pointer) {
 	mux.Lock()
 	defer mux.Unlock()
 	delete(wmap, W)
+
+	if s, ok := W.w.(IOShutdowner); ok {
+		s.IOShutdown(W.err)
+	}
+
 	W.w = nil
 	W.err = nil
 	C.free(unsafe.Pointer(W.key))
