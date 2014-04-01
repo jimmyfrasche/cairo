@@ -8,6 +8,10 @@ package cairo
 //
 //extern void go_write_callback_reaper(void*);
 //
+//extern cairo_status_t go_read_callback(void*, unsigned char*, unsigned int);
+//
+//extern void go_read_callback_reaper(void*);
+//
 //static cairo_user_data_key_t* new_user_key() {
 //	return malloc(sizeof(cairo_user_data_key_t));
 //}
@@ -33,6 +37,27 @@ package cairo
 //static wreaper_pass_back wreaper_getter() {
 //	return &c_write_callback_reaper;
 //}
+//
+//
+//static cairo_status_t c_read_callback(void* w, unsigned char* data, unsigned int length) {
+//	return go_read_callback(w, data, length);
+//}
+//
+//typedef cairo_status_t (*rcallback_pass_back)(void*, unsigned char*, unsigned int);
+//
+//static rcallback_pass_back rcallback_getter() {
+//	return &c_read_callback;
+//}
+//
+//static void c_read_callback_reaper(void *data) {
+//	go_read_callback_reaper(data);
+//}
+//
+//typedef void (*rreaper_pass_back)(void*);
+//
+//static rreaper_pass_back rreaper_getter() {
+//	return &c_read_callback_reaper;
+//}
 import "C"
 
 import (
@@ -53,6 +78,7 @@ type IOShutdowner interface {
 
 var (
 	wmap = map[*writer]struct{}{}
+	rmap = map[*reader]struct{}{}
 	mux  = new(sync.Mutex)
 )
 
@@ -71,10 +97,28 @@ func (w *writer) write(p []byte) error {
 		w.err = err
 	}
 	if n == len(p) {
-		return nil
+		return w.err
 	}
 	w.err = io.ErrShortWrite
 	return w.err
+}
+
+type reader struct {
+	key *C.cairo_user_data_key_t
+	r   io.Reader
+	err error
+}
+
+func (r *reader) read(p []byte) error {
+	if r.err != nil {
+		return r.err
+	}
+	_, err := r.r.Read(p)
+	if err != nil {
+		return nil
+	}
+	r.err = err
+	return r.err
 }
 
 //XtensionCairoWriteFuncT is a cairo_write_func_t that expects as its closure
@@ -90,9 +134,8 @@ var XtensionCairoWriteFuncT = C.callback_getter()
 //export go_write_callback
 func go_write_callback(w unsafe.Pointer, data *C.uchar, length C.uint) C.cairo_status_t {
 	W := (*writer)(w)
-	len := int(length)
 
-	bs := C.GoBytes(unsafe.Pointer(data), C.int(len))
+	bs := C.GoBytes(unsafe.Pointer(data), C.int(length))
 	if err := W.write(bs); err == nil {
 		return errSuccess
 	}
@@ -173,4 +216,51 @@ func XtensionWrapWriter(w io.Writer) (closure unsafe.Pointer) {
 	wmap[W] = struct{}{}
 
 	return unsafe.Pointer(W)
+}
+
+func wrapReader(r io.Reader) (closure unsafe.Pointer) {
+	key := C.new_user_key()
+	R := &reader{r: r, key: key}
+	mux.Lock()
+	defer mux.Unlock()
+	rmap[R] = struct{}{}
+
+	return unsafe.Pointer(R)
+}
+
+func (i ImageSurface) registerReader(r unsafe.Pointer) {
+	if err := i.Err(); err != nil {
+		go_read_callback_reaper(r)
+	}
+	R := (*reader)(r)
+	C.cairo_surface_set_user_data(i.s, R.key, r, C.rreaper_getter())
+}
+
+//export go_read_callback
+func go_read_callback(r unsafe.Pointer, data *C.uchar, length C.uint) C.cairo_status_t {
+	R := (*reader)(r)
+
+	bs := C.GoBytes(unsafe.Pointer(data), C.int(length))
+	if err := R.read(bs); err == nil {
+		return errSuccess
+	}
+	return errReadError
+}
+
+var cairoreadfunct = C.rcallback_getter()
+
+//export go_read_callback_reaper
+func go_read_callback_reaper(r unsafe.Pointer) {
+	R := (*reader)(r)
+	mux.Lock()
+	defer mux.Unlock()
+	delete(rmap, R)
+
+	if s, ok := R.r.(IOShutdowner); ok {
+		s.IOShutdown(R.err)
+	}
+
+	R.r = nil
+	R.err = nil
+	C.free(unsafe.Pointer(R.key))
 }
