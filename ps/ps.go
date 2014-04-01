@@ -8,7 +8,6 @@ package ps
 import "C"
 
 import (
-	"io"
 	"unsafe"
 
 	"github.com/jimmyfrasche/cairo"
@@ -19,8 +18,6 @@ import (
 //Surface implements cairo.PagedVectorSurface
 type Surface struct {
 	cairo.XtensionPagedVectorSurface
-	//w is used in NewWriter to ensure a reference to the writer lives as long as we do
-	w   io.Writer
 	eps bool
 }
 
@@ -34,7 +31,7 @@ func news(s *C.cairo_surface_t, eps bool) (Surface, error) {
 
 func cNew(s *C.cairo_surface_t) (cairo.Surface, error) {
 	eps := C.cairo_ps_surface_get_eps(s) == 1
-	//Note that if the surface was created with an io.Writer we have no way of
+	//Note that if the surface was created with a Writer we have no way of
 	//getting it here but that's okay as long as the original reference lives on.
 	S, err := news(s, eps)
 	return S, err
@@ -80,7 +77,7 @@ func errChk(header, setup Comments) (err error) {
 
 //New creates a new PostScript of the specified size.
 //
-//W is the io.Writer the PostScript is written to.
+//W is the Writer the PostScript is written to.
 //Width and height are in the unit of a typographical point
 //(1 point = 1/72 inch).
 //Eps specifies whether this will be Encapsulated PostScript.
@@ -91,7 +88,7 @@ func errChk(header, setup Comments) (err error) {
 //and cairo_ps_surface_set_eps and cairo_ps_surface_dsc_comment
 //and cairo_ps_surface_dsc_begin_setup and
 //cairo_ps_surface_dsc_begin_page_setup.
-func New(w io.Writer, width, height float64, eps bool, header, setup Comments) (S Surface, err error) {
+func New(w cairo.Writer, width, height float64, eps bool, header, setup Comments) (S Surface, err error) {
 	if err = errChk(header, setup); err != nil {
 		return
 	}

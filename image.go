@@ -6,7 +6,6 @@ package cairo
 import "C"
 
 import (
-	"io"
 	"runtime"
 	"unsafe"
 )
@@ -48,7 +47,7 @@ func cNewImageSurface(s *C.cairo_surface_t) (Surface, error) {
 //it with the given PNG file.
 //
 //Originally cairo_image_surface_create_from_png_stream.
-func NewImageSurfaceFromPNG(r io.Reader) (ImageSurface, error) {
+func NewImageSurfaceFromPNG(r Reader) (ImageSurface, error) {
 	rp := wrapReader(r)
 	is := C.cairo_image_surface_create_from_png_stream(cairoreadfunct, rp)
 	s, err := cNewImageSurface(is)

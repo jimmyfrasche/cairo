@@ -9,7 +9,6 @@ package script
 import "C"
 
 import (
-	"io"
 	"unsafe"
 	"github.com/jimmyfrasche/cairo"
 	"github.com/jimmyfrasche/cairo/recording"
@@ -19,15 +18,12 @@ import (
 type Device struct {
 	*cairo.XtensionDevice
 	mode mode
-	//w is used to ensure a reference to the writer lives as long as we do
-	w io.Writer
 }
 
-func cNew(d *C.cairo_device_t, m mode, w io.Writer) (Device, error) {
+func cNew(d *C.cairo_device_t, m mode) (Device, error) {
 	D := Device{
 		XtensionDevice: cairo.NewXtensionDevice(d),
 		mode:           m,
-		w:              w,
 	}
 	return D, D.Err()
 }
@@ -35,10 +31,10 @@ func cNew(d *C.cairo_device_t, m mode, w io.Writer) (Device, error) {
 //New creates a script device from writer in mode.
 //
 //Originally cairo_script_create_for_stream.
-func New(w io.Writer, mode mode) (Device, error) {
+func New(w cairo.Writer, mode mode) (Device, error) {
 	wp := cairo.XtensionWrapWriter(w)
 	d := C.cairo_script_create_for_stream(cairo.XtensionCairoWriteFuncT, wp)
-	D, err := cNew(d, mode, w)
+	D, err := cNew(d, mode)
 	D.XtensionRegisterWriter(wp)
 	return D, err
 }
@@ -50,7 +46,7 @@ func NewFile(filename string, mode mode) (Device, error) {
 	s := C.CString(filename)
 	d := C.cairo_script_create(s)
 	C.free(unsafe.Pointer(s))
-	return cNew(d, mode, nil)
+	return cNew(d, mode)
 }
 
 //FromRecordingSurface outputs the record operations in rs to d.
@@ -64,7 +60,7 @@ func (d Device) FromRecordingSurface(rs recording.Surface) error {
 
 func reviv(d *C.cairo_device_t) (cairo.Device, error) {
 	m := mode(C.cairo_script_get_mode(d))
-	return cNew(d, m, nil)
+	return cNew(d, m)
 }
 
 func init() {

@@ -8,7 +8,6 @@ package pdf
 import "C"
 
 import (
-	"io"
 	"unsafe"
 
 	"github.com/jimmyfrasche/cairo"
@@ -19,8 +18,6 @@ import (
 //Surface implements cairo.PagedVectorSurface.
 type Surface struct {
 	cairo.XtensionPagedVectorSurface
-	//w is used in NewWriter to ensure a reference to the writer lives as long as we do
-	w io.Writer
 }
 
 func news(s *C.cairo_surface_t) (Surface, error) {
@@ -39,12 +36,12 @@ func init() {
 }
 
 //New creates a new PDF of the specified size.
-//W is the io.Writer the PDF is written to.
+//W is the Writer the PDF is written to.
 //Width and height are in the unit of a typographical point
 //(1 point = 1/72 inch).
 //
 //Originally cairo_pdf_surface_create_for_stream.
-func New(w io.Writer, width, height float64) (Surface, error) {
+func New(w cairo.Writer, width, height float64) (Surface, error) {
 	wp := cairo.XtensionWrapWriter(w)
 	pdf := C.cairo_pdf_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	S, err := news(pdf)

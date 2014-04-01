@@ -76,6 +76,14 @@ type IOShutdowner interface {
 	IOShutdown(error)
 }
 
+type Reader interface {
+	io.Reader
+}
+
+type Writer interface {
+	io.Writer
+}
+
 var (
 	wmap = map[*writer]struct{}{}
 	rmap = map[*reader]struct{}{}
@@ -84,7 +92,7 @@ var (
 
 type writer struct {
 	key *C.cairo_user_data_key_t
-	w   io.Writer
+	w   Writer
 	err error
 }
 
@@ -105,7 +113,7 @@ func (w *writer) write(p []byte) error {
 
 type reader struct {
 	key *C.cairo_user_data_key_t
-	r   io.Reader
+	r   Reader
 	err error
 }
 
@@ -122,9 +130,9 @@ func (r *reader) read(p []byte) error {
 }
 
 //XtensionCairoWriteFuncT is a cairo_write_func_t that expects as its closure
-//argument the result of calling XtensionWrapWriter on an io.Writer.
+//argument the result of calling XtensionWrapWriter on a Writer.
 //The surface or device created with this pair must be used to register
-//the wrapped io.Wrapper with that objects XtensionRegisterWriter method.
+//the wrapped Writer with that objects XtensionRegisterWriter method.
 //
 //Anything less will cause at best memory leaks and at worst random errors.
 //
@@ -207,7 +215,7 @@ func (d *XtensionDevice) XtensionRegisterWriter(w unsafe.Pointer) {
 //	s := C.cairo_X_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wrapped)
 //	S := cairo.NewXtensionSurface(s)
 //	S.XtensionRegisterWriter(wrapped)
-func XtensionWrapWriter(w io.Writer) (closure unsafe.Pointer) {
+func XtensionWrapWriter(w Writer) (closure unsafe.Pointer) {
 	key := C.new_user_key()
 	W := &writer{w: w, key: key}
 
@@ -218,7 +226,7 @@ func XtensionWrapWriter(w io.Writer) (closure unsafe.Pointer) {
 	return unsafe.Pointer(W)
 }
 
-func wrapReader(r io.Reader) (closure unsafe.Pointer) {
+func wrapReader(r Reader) (closure unsafe.Pointer) {
 	key := C.new_user_key()
 	R := &reader{r: r, key: key}
 	mux.Lock()

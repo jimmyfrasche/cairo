@@ -8,7 +8,6 @@ package svg
 import "C"
 
 import (
-	"io"
 	"unsafe"
 
 	"github.com/jimmyfrasche/cairo"
@@ -46,7 +45,7 @@ func NewFile(filename string, width, height float64) (Surface, error) {
 //(1 point = 1/72 inch).
 //
 //Originally cairo_svg_surface_create_for_stream.
-func New(w io.Writer, width, height float64) (Surface, error) {
+func New(w cairo.Writer, width, height float64) (Surface, error) {
 	wp := cairo.XtensionWrapWriter(w)
 	svg := C.cairo_svg_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	s := Surface{
@@ -57,7 +56,7 @@ func New(w io.Writer, width, height float64) (Surface, error) {
 }
 
 func cNew(s *C.cairo_surface_t) (cairo.Surface, error) {
-	//Note that if the surface was created with an io.Writer we have no way of
+	//Note that if the surface was created with a Writer we have no way of
 	//getting it here but that's okay as long as the original reference lives on.
 	S := Surface{
 		XtensionVectorSurface: cairo.NewXtensionVectorSurface(s),
