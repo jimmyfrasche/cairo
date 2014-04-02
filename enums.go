@@ -414,44 +414,43 @@ func (w weight) String() string {
 	return "unknown font weight"
 }
 
-//cairo_format_t
-type format int
-
-//A format identifies the memory format of image data.
+//Format identifies the memory format of image data.
 //
 //Originally cairo_format_t.
+type Format int
+
 const (
 	//FormatInvalid specifies an unsupported or nonexistent format.
-	FormatInvalid format = C.CAIRO_FORMAT_INVALID
+	FormatInvalid Format = C.CAIRO_FORMAT_INVALID
 
 	//FormatARGB32 specifies that each pixel is a native-endian 32 bit quanity
 	//listed as transparency, red, green, and then blue.
-	FormatARGB32 format = C.CAIRO_FORMAT_ARGB32 //zero value
+	FormatARGB32 Format = C.CAIRO_FORMAT_ARGB32 //zero value
 
 	//FormatRGB24 is the same as FormatARGB32 but the 8-bits of transparency
 	//are unused.
-	FormatRGB24 format = C.CAIRO_FORMAT_RGB24
+	FormatRGB24 Format = C.CAIRO_FORMAT_RGB24
 
 	//FormatA8 stores each pixel in an 8-bit quantity holding an alpha value.
-	FormatA8 format = C.CAIRO_FORMAT_A8
+	FormatA8 Format = C.CAIRO_FORMAT_A8
 
 	//FormatA1 stores each pixel in a 1-bit quantity holding an alpha value.
-	FormatA1 format = C.CAIRO_FORMAT_A1
+	FormatA1 Format = C.CAIRO_FORMAT_A1
 
 	//FormatRGB16_565 stores each pixel as a 16-bit quantity with 5 bits for
 	//red, 6 bits for green, and 5 bits for blue.
-	FormatRGB16_565 format = C.CAIRO_FORMAT_RGB16_565
+	FormatRGB16_565 Format = C.CAIRO_FORMAT_RGB16_565
 
 	//FormatRGB30 is like FormatRGB24 but with 10 bits per pixel instead
 	//of 8.
-	FormatRGB30 format = C.CAIRO_FORMAT_RGB30
+	FormatRGB30 Format = C.CAIRO_FORMAT_RGB30
 )
 
-func (f format) c() C.cairo_format_t {
+func (f Format) c() C.cairo_format_t {
 	return C.cairo_format_t(f)
 }
 
-func (f format) String() string {
+func (f Format) String() string {
 	var s string
 	switch f {
 	case FormatARGB32:
@@ -470,6 +469,14 @@ func (f format) String() string {
 		s = "unknown"
 	}
 	return s + " format"
+}
+
+//StrideForWidth provides a stride value that will respect all alignment
+//requirements of the accelerated image-rendering code within libcairo.
+//
+//Originally cairo_format_stride_for_width.
+func (f Format) StrideForWidth(width int) int {
+	return int(C.cairo_format_stride_for_width(f.c(), C.int(width)))
 }
 
 //cairo_hint_metrics_t

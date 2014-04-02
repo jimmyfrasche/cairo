@@ -12,11 +12,11 @@ import (
 
 type ImageSurface struct {
 	*XtensionSurface
-	format                format
+	format                Format
 	width, height, stride int
 }
 
-func newImg(s *C.cairo_surface_t, format format, width, height, stride int) (ImageSurface, error) {
+func newImg(s *C.cairo_surface_t, format Format, width, height, stride int) (ImageSurface, error) {
 	S := ImageSurface{
 		XtensionSurface: NewXtensionSurface(s),
 		format:          format,
@@ -28,14 +28,14 @@ func newImg(s *C.cairo_surface_t, format format, width, height, stride int) (Ima
 }
 
 //Originally cairo_image_surface_create.
-func NewImageSurface(format format, width, height int) (ImageSurface, error) {
+func NewImageSurface(format Format, width, height int) (ImageSurface, error) {
 	is := C.cairo_image_surface_create(format.c(), C.int(width), C.int(height))
 	stride := int(C.cairo_image_surface_get_stride(is))
 	return newImg(is, format, width, height, stride)
 }
 
 func cNewImageSurface(s *C.cairo_surface_t) (Surface, error) {
-	format := format(C.cairo_image_surface_get_format(s))
+	format := Format(C.cairo_image_surface_get_format(s))
 	width := int(C.cairo_image_surface_get_width(s))
 	height := int(C.cairo_image_surface_get_height(s))
 	stride := int(C.cairo_image_surface_get_stride(s))
@@ -78,7 +78,7 @@ func NewImageSurfaceFromPNGFile(filename string) (ImageSurface, error) {
 //Format reports the format of the surface.
 //
 //Originally cairo_image_surface_get_format.
-func (i ImageSurface) Format() format {
+func (i ImageSurface) Format() Format {
 	return i.format
 }
 
