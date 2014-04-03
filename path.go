@@ -140,10 +140,12 @@ func (p pathElement) String() string {
 	return "invalid path element"
 }
 
+//Type reports the type of this path element.
 func (p pathElement) Type() pathDataType {
 	return p.dtype
 }
 
+//Points returns a copy of the slice of points in this path element.
 func (p pathElement) Points() (out []Point) {
 	out = make([]Point, 0, len(p.points))
 	copy(out, p.points)
@@ -165,6 +167,7 @@ func (p pathElement) len() int {
 	return -1
 }
 
+//A Path is a representation of a path.
 type Path []PathElement
 
 func (p *Path) append(t pathDataType, ps ...Point) {
@@ -174,18 +177,22 @@ func (p *Path) append(t pathDataType, ps ...Point) {
 	})
 }
 
+//MoveTo appends a PathMoveTo to the path.
 func (p *Path) MoveTo(pt Point) {
 	p.append(PathMoveTo, pt)
 }
 
+//MoveTo appends a PathMoveTo to the path.
 func (p *Path) LineTo(pt Point) {
 	p.append(PathLineTo, pt)
 }
 
+//LineTo appends a PathLineTo to the path.
 func (p *Path) CurveTo(p0, p1, p2 Point) {
 	p.append(PathCurveTo, p0, p1, p2)
 }
 
+//ClosePath appends a ClosePath to the path.
 func (p *Path) ClosePath() {
 	p.append(PathClosePath)
 }

@@ -990,7 +990,7 @@ func (c *Context) Arc(circle Circle, fromAngle, toAngle float64) *Context {
 	return c
 }
 
-//Arc adds a circular arc along the surface of circle from fromAngle
+//ArcNegative adds a circular arc along the surface of circle from fromAngle
 //decreasing to toAngle.
 //
 //If fromAngle > toAngle, then toAngle will be dereased by 2π until
@@ -1461,7 +1461,7 @@ func (c *Context) Rotate(θ float64) *Context {
 //transformation.
 //
 //Originally cairo_transform.
-func (c *Context) Transfrom(m Matrix) *Context {
+func (c *Context) Transform(m Matrix) *Context {
 	C.cairo_transform(c.c, &m.m)
 	return c
 }

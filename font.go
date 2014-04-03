@@ -47,7 +47,7 @@ func (f *FontOptions) Close() error {
 	return err
 }
 
-//Error queries f to see if there is an error.
+//Err queries f to see if there is an error.
 //
 //Originally cairo_font_options_status.
 func (f *FontOptions) Err() error {
@@ -350,6 +350,8 @@ func cFont(f *C.cairo_font_face_t) (Font, error) {
 	return F, nil
 }
 
+//Type reports the type of the font.
+//
 //Originally cairo_font_face_get_type.
 func (f *XtensionFont) Type() fontType {
 	return fontType(C.cairo_font_face_get_type(f.f))
@@ -479,6 +481,16 @@ func (s *ScaledFont) Close() error {
 	return err
 }
 
+//TextCluster holds information about a single text cluster.
+//A text cluster is a minimal mapping of some glyphs to some runes.
+//
+//For a cluster to be valid, RuneLength and NumGlyphs should be non-negative
+//and at least one non-zero.
+//Note that clusters with zero glyphs are not as well supported as normal
+//clusters.
+//For example, PDF rendering applications typically ignore those clusters when
+//PDF text is being selected.
+//
 //Originally cairo_text_cluster_t.
 type TextCluster struct {
 	RuneLength, NumGlyphs int
