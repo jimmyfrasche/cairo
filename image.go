@@ -10,6 +10,7 @@ import (
 	"unsafe"
 )
 
+//An ImageSurface is an in-memory surface.
 type ImageSurface struct {
 	*XtensionSurface
 	format                Format
@@ -27,6 +28,9 @@ func newImg(s *C.cairo_surface_t, format Format, width, height, stride int) (Ima
 	return S, S.Err()
 }
 
+//NewImageSurface creates an image surface of the given width, height,
+//and format.
+//
 //Originally cairo_image_surface_create.
 func NewImageSurface(format Format, width, height int) (ImageSurface, error) {
 	is := C.cairo_image_surface_create(format.c(), C.int(width), C.int(height))
