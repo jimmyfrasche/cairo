@@ -7,6 +7,7 @@ import "C"
 
 import (
 	"image/color"
+	"math"
 	"runtime"
 	"unsafe"
 )
@@ -990,6 +991,11 @@ func (c *Context) Arc(circle Circle, fromAngle, toAngle float64) *Context {
 	return c
 }
 
+//Circle is shorthand for calling Arc from 0 to 2π.
+func (c *Context) Circle(circle Circle) *Context {
+	return c.Arc(circle, 0, 2*math.Pi)
+}
+
 //ArcNegative adds a circular arc along the surface of circle from fromAngle
 //decreasing to toAngle.
 //
@@ -1003,7 +1009,7 @@ func (c *Context) Arc(circle Circle, fromAngle, toAngle float64) *Context {
 func (c *Context) ArcNegative(circle Circle, fromAngle, toAngle float64) *Context {
 	x, y, r := circle.c()
 	a1, a2 := C.double(fromAngle), C.double(toAngle)
-	C.cairo_arc(c.c, x, y, r, a1, a2)
+	C.cairo_arc_negative(c.c, x, y, r, a1, a2)
 	return c
 }
 
