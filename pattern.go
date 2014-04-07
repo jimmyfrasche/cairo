@@ -56,7 +56,7 @@ type pattern struct {
 
 func newPattern(p *C.cairo_pattern_t) *pattern {
 	P := &pattern{p}
-	runtime.SetFinalizer(p, (*pattern).Close)
+	runtime.SetFinalizer(P, (*pattern).Close)
 	return P
 }
 
