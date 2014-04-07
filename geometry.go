@@ -51,6 +51,26 @@ func (p Point) Conj() Point {
 	return Pt(-p.X, -p.Y)
 }
 
+//Rx reflects p about the x-axis.
+func (p Point) Rx() Point {
+	return Pt(-p.X, p.Y)
+}
+
+//Ry reflects p about the y-axis.
+func (p Point) Ry() Point {
+	return Pt(p.X, -p.Y)
+}
+
+//Sx shifts p along the x-axis by x.
+func (p Point) Sx(x float64) Point {
+	return Pt(p.X+x, p.Y)
+}
+
+//Sy shifts p along the y-axis by y.
+func (p Point) Sy(y float64) Point {
+	return Pt(p.X, p.Y+y)
+}
+
 //Add returns the vector p-q.
 func (p Point) Add(q Point) Point {
 	return Point{p.X + q.X, p.Y + q.Y}
@@ -191,6 +211,11 @@ func (r Rectangle) Dy() float64 {
 	return r.Max.Y - r.Min.Y
 }
 
+//Verts returns all four corners of the rectangle, clockwise from r.Min.
+func (r Rectangle) Verts() (x0y0, x0y1, x1y1, x1y0 Point) {
+	return r.Min, Pt(r.Min.X, r.Max.Y), r.Max, Pt(r.Max.X, r.Min.Y)
+}
+
 //Add returns the rectangle r translated by p.
 func (r Rectangle) Add(p Point) Rectangle {
 	return Rectangle{
@@ -201,7 +226,7 @@ func (r Rectangle) Add(p Point) Rectangle {
 
 //Sub returns the rectangle r translated by -p.
 func (r Rectangle) Sub(p Point) Rectangle {
-	return r.Add(Pt(-p.X, -p.Y))
+	return r.Add(p.Conj())
 }
 
 //Intersect returns the largest rectangle contained by both r and s.
@@ -295,7 +320,7 @@ func (c Circle) String() string {
 
 //Canon returns a canonical circle.
 func (c Circle) Canon() Circle {
-	return Circ(c.Center.X, c.Center.Y, math.Abs(c.Radius))
+	return Circle{c.Center, math.Abs(c.Radius)}
 }
 
 //Add returns the circle c translated by p.
@@ -305,7 +330,12 @@ func (c Circle) Add(p Point) Circle {
 
 //Sub returns the circle c translated by -p.
 func (c Circle) Sub(p Point) Circle {
-	return c.Add(Pt(-p.X, -p.Y))
+	return c.Add(p.Conj())
+}
+
+//Mul returns the circle c with its radius multiplied by k.
+func (c Circle) Mul(k float64) Circle {
+	return Circle{c.Center, k * c.Radius}
 }
 
 //Empty reports whether this circle contains no points.
