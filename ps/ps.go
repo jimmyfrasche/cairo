@@ -105,33 +105,6 @@ func New(w cairo.Writer, width, height float64, eps bool, header, setup Comments
 	return S, err
 }
 
-//NewFile creates a new PostScript of the specified size.
-//
-//Filename is the file the PostScript is written to.
-//Width and height are in the unit of a typographical point
-//(1 point = 1/72 inch).
-//Eps specifies whether this will be Encapsulated PostScript.
-//Header is any DSC comments to apply to the header section.
-//Setup is any DSC comment to apply to the setup section.
-//
-//Originally cairo_ps_surface_create
-//and cairo_ps_surface_set_eps and cairo_ps_surface_dsc_comment
-//and cairo_ps_surface_dsc_begin_setup and
-//cairo_ps_surface_dsc_begin_page_setup.
-func NewFile(filename string, width, height float64, eps bool, header, setup Comments) (S Surface, err error) {
-	if err = errChk(header, setup); err != nil {
-		return
-	}
-
-	s := C.CString(filename)
-	ps := C.cairo_ps_surface_create(s, C.double(width), C.double(height))
-	C.free(unsafe.Pointer(s))
-
-	cfgSurf(ps, eps, header, setup)
-
-	return news(ps, eps)
-}
-
 //RestrictTo restricts the generated PostScript to the specified level.
 //
 //This method should only be called before any drawing operations have been

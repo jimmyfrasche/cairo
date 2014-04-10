@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"unsafe"
+
 	"github.com/jimmyfrasche/cairo"
 	"github.com/jimmyfrasche/cairo/recording"
 )
@@ -37,16 +38,6 @@ func New(w cairo.Writer, mode mode) (Device, error) {
 	D, err := cNew(d, mode)
 	D.XtensionRegisterWriter(wp)
 	return D, err
-}
-
-//NewFile creates a device, in mode, that writes to filename.
-//
-//Originally cairo_script_create.
-func NewFile(filename string, mode mode) (Device, error) {
-	s := C.CString(filename)
-	d := C.cairo_script_create(s)
-	C.free(unsafe.Pointer(s))
-	return cNew(d, mode)
 }
 
 //FromRecordingSurface outputs the record operations in rs to d.

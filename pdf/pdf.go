@@ -8,8 +8,6 @@ package pdf
 import "C"
 
 import (
-	"unsafe"
-
 	"github.com/jimmyfrasche/cairo"
 )
 
@@ -47,19 +45,6 @@ func New(w cairo.Writer, width, height float64) (Surface, error) {
 	S, err := news(pdf)
 	S.XtensionRegisterWriter(wp)
 	return S, err
-}
-
-//NewFile creates a new PDF of the specified size.
-//Filename specifies the file the PDF is written to.
-//Width and height are in the unit of a typographical point
-//(1 point = 1/72 inch).
-//
-//Originally cairo_pdf_surface_create.
-func NewFile(filename string, width, height float64) (Surface, error) {
-	s := C.CString(filename)
-	pdf := C.cairo_pdf_surface_create(s, C.double(width), C.double(height))
-	C.free(unsafe.Pointer(s))
-	return news(pdf)
 }
 
 //RestrictTo restricts the generated PDF to the specified verison.

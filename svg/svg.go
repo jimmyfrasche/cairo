@@ -8,8 +8,6 @@ package svg
 import "C"
 
 import (
-	"unsafe"
-
 	"github.com/jimmyfrasche/cairo"
 )
 
@@ -18,22 +16,6 @@ import (
 //Surface implements cairo.VectorSurface.
 type Surface struct {
 	cairo.XtensionVectorSurface
-}
-
-//NewFile creates a new SVG surface that writes to filename.
-//
-//The parameters width and height are in the unit of a typographical point
-//(1 point = 1/72 inch).
-//
-//Originally cairo_svg_surface_create.
-func NewFile(filename string, width, height float64) (Surface, error) {
-	nm := C.CString(filename)
-	svg := C.cairo_svg_surface_create(nm, C.double(width), C.double(height))
-	C.free(unsafe.Pointer(nm))
-	s := Surface{
-		XtensionVectorSurface: cairo.NewXtensionVectorSurface(svg),
-	}
-	return s, s.Err()
 }
 
 //New creates a new SVG surface that writes to writer.
