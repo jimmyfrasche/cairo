@@ -5,7 +5,10 @@ package cairo
 //#include <cairo/cairo.h>
 import "C"
 
-import "runtime"
+import (
+	"runtime"
+	"unsafe"
+)
 
 //An ImageSurface is an in-memory surface.
 type ImageSurface struct {
@@ -90,6 +93,20 @@ func (i ImageSurface) Height() int {
 //Originally cairo_image_surface_get_stride.
 func (i ImageSurface) Stride() int {
 	return i.stride
+}
+
+//WritePNG writes a PNG to w.
+//
+//Originally cairo_write_to_png_stream.
+func (i ImageSurface) WritePNG(w Writer) error {
+	//This is a very special case, which is why we can skip most of the machinery
+	//in io.go.
+	W := &writer{w: w}
+	err := C.cairo_surface_write_to_png_stream(i.s, XtensionCairoWriteFuncT, unsafe.Pointer(W))
+	if err == errWriteError {
+		return W.err
+	}
+	return toerr(err)
 }
 
 type mappedImageSurface struct {
