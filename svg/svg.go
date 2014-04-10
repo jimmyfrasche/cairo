@@ -1,4 +1,8 @@
 //Package svg implements the SVG backend for libcairo rendering.
+//
+//Libcairo must be compiled with
+//	CAIRO_HAS_SVG_SURFACE
+//in addition to the requirements of cairo.
 package svg
 
 //#cgo pkg-config: cairo

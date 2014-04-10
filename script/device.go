@@ -1,5 +1,9 @@
 //Package script implements a device and surface for writing drawing operations
 //to a file for debugging purposes.
+//
+//Libcairo must be compiled with
+//	CAIRO_HAS_SCRIPT_SURFACE
+//in addition to the requirements of cairo.
 package script
 
 //#cgo pkg-config: cairo

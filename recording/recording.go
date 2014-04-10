@@ -1,5 +1,9 @@
 //Package recording provides a surface that records drawing operations
 //performed on it to later be replayed on another surface.
+//
+//Libcairo must be compiled with
+//	CAIRO_HAS_RECORDING_SURFACE
+//in addition to the requirements of cairo.
 package recording
 
 //#cgo pkg-config: cairo

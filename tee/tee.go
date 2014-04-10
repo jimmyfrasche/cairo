@@ -1,5 +1,9 @@
 //Package tee implements a surface that multiplexes all operations performed
 //on it to the one or more underlying surfaces.
+//
+//Libcairo must be compiled with
+//	CAIRO_HAS_TEE_SURFACE
+//in addition to the requirements of cairo.
 package tee
 
 //#cgo pkg-config: cairo

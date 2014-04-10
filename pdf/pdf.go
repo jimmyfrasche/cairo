@@ -1,4 +1,8 @@
 //Package pdf implements the PDF backend for libcairo rendering.
+//
+//Libcairo must be compiled with
+//	CAIRO_HAS_PDF_SURFACE
+//in addition to the requirements of cairo.
 package pdf
 
 //#cgo pkg-config: cairo

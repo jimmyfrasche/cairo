@@ -1,4 +1,8 @@
 //Package ps implements the PostScript backend for libcairo rendering.
+//
+//Libcairo must be compiled with
+//	CAIRO_HAS_PS_SURFACE
+//in addition to the requirements of cairo.
 package ps
 
 //#cgo pkg-config: cairo

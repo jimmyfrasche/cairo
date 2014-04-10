@@ -21,6 +21,7 @@
 //This package requires libcairo version 1.12 or greater.
 //Libcairo must be compiled with:
 //	CAIRO_HAS_PNG_FUNCTIONS
+//	CAIRO_HAS_IMAGE_SURFACE
 //
 //Related packages, such as cairo/ps, may require further options compiled
 //in to libcairo, but they will be self explanatory (that is, cairo/ps requires
