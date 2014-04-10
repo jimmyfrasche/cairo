@@ -24,8 +24,7 @@
 //	CAIRO_HAS_IMAGE_SURFACE
 //
 //Related packages, such as cairo/ps, may require further options compiled
-//in to libcairo, but they will be self explanatory (that is, cairo/ps requires
-//PS support to be enabled in libcairo).
+//in to libcairo, but they will be documented.
 //
 //Libcairo can be found at http://cairographics.org .
 //
