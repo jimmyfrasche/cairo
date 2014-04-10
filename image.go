@@ -5,10 +5,7 @@ package cairo
 //#include <cairo/cairo.h>
 import "C"
 
-import (
-	"runtime"
-	"unsafe"
-)
+import "runtime"
 
 //An ImageSurface is an in-memory surface.
 type ImageSurface struct {
@@ -47,11 +44,11 @@ func cNewImageSurface(s *C.cairo_surface_t) (Surface, error) {
 	return newImg(s, format, width, height, stride)
 }
 
-//NewImageSurfaceFromPNG creates a new image surface and initalizes
+//ReadPNG creates a new image surface and initalizes
 //it with the given PNG file.
 //
 //Originally cairo_image_surface_create_from_png_stream.
-func NewImageSurfaceFromPNG(r Reader) (ImageSurface, error) {
+func ReadPNG(r Reader) (ImageSurface, error) {
 	rp := wrapReader(r)
 	is := C.cairo_image_surface_create_from_png_stream(cairoreadfunct, rp)
 	s, err := cNewImageSurface(is)
@@ -61,18 +58,6 @@ func NewImageSurfaceFromPNG(r Reader) (ImageSurface, error) {
 	}
 	S.registerReader(rp)
 	return S, nil
-}
-
-//NewImageSurfaceFromPNGFile creates a new image surface and initializes
-//it with the contents of the given PNG file.
-//
-//Originally cairo_image_surface_create_from_png.
-func NewImageSurfaceFromPNGFile(filename string) (ImageSurface, error) {
-	f := C.CString(filename)
-	is := C.cairo_image_surface_create_from_png(f)
-	C.free(unsafe.Pointer(f))
-	s, err := cNewImageSurface(is)
-	return s.(ImageSurface), err
 }
 
 //BUG(jmf): ImageSurface: need safe wrapper around get_data
