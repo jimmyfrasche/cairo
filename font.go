@@ -436,7 +436,6 @@ func NewToyFont(family string, slant slant, weight weight) ToyFont {
 //
 //Originally cairo_scaled_font_t.
 type ScaledFont struct {
-	//TODO
 	f *C.cairo_scaled_font_t
 }
 

@@ -186,7 +186,7 @@ var examples = []struct {
 			}
 
 			c.ClosePath()
-			c.SetSourceColor(cairo.Color{.5, .5, 1}) //TODO change to color after fixing color conversion error
+			c.SetSourceColor(cairo.Color{.5, .5, 1})
 			c.FillPreserve()
 			c.SetSourceColor(cairo.AlphaColor{R: .5, A: .5})
 			c.SetLineWidth(10)
