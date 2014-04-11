@@ -235,7 +235,6 @@ func (c *Context) PopGroupToSource() error {
 //Otherwise,
 //Originally cairo_get_group_target.
 func (c *Context) GroupTarget() (Surface, error) {
-	//XXX should we track group depth and return c.Target(), nil if 0?
 	s := C.cairo_get_group_target(c.c)
 	s = C.cairo_surface_reference(s)
 	return XtensionRevivifySurface(s)
@@ -1298,8 +1297,6 @@ func (c *Context) SetScaledFont(sf *ScaledFont) *Context {
 //
 //Originally cairo_get_scaled_font.
 func (c *Context) ScaledFont() (*ScaledFont, error) {
-	//XXX calling this with no scaled font set breaks c. Have a scaledFontSet field on c and
-	//return a synthetic error if false? Is cairo_t revivified anywhere?
 	f := C.cairo_get_scaled_font(c.c)
 	f = C.cairo_scaled_font_reference(f)
 	sf := cNewScaledFont(f)
