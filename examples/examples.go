@@ -312,10 +312,11 @@ var examples = []struct {
 		return nil
 	}},
 	{"gradient", func(c *cairo.Context) error {
-		lg := cairo.NewLinearGradient(cairo.ZP, pt(0, 256))
+		lg := cairo.NewLinearGradient(cairo.ZP, pt(0, 256), []cairo.ColorStop{
+			{1, cairo.Black},
+			{0, cairo.White},
+		}...)
 		defer lg.Close()
-		lg.AddColorStop(1, cairo.Black)
-		lg.AddColorStop(0, cairo.AlphaColor{1, 1, 1, 1})
 
 		c.
 			Rectangle(cairo.Rectangle{Max: pt(256, 256)}).
@@ -324,10 +325,12 @@ var examples = []struct {
 
 		rg := cairo.NewRadialGradient(
 			cairo.Circ(115.2, 102.4, 25.6),
-			cairo.Circ(102.4, 102.4, 128))
+			cairo.Circ(102.4, 102.4, 128),
+			[]cairo.ColorStop{
+				{0, cairo.White},
+				{1, cairo.Black},
+			}...)
 		defer rg.Close()
-		rg.AddColorStop(0, cairo.AlphaColor{1, 1, 1, 1})
-		rg.AddColorStop(1, cairo.Black)
 		c.
 			SetSource(rg).
 			Arc(cairo.Circ(128, 128, 76), 0, 2*math.Pi).

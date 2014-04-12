@@ -236,58 +236,68 @@ func (s SurfacePattern) Surface() Surface {
 	return s.s
 }
 
+//A ColorStop is the color of a single gradient stop.
+//
+//Note that when defining gradients it two, or more, stops are specified
+//with identical offset values, they will be sorted according to the order
+//in which the stops are added.
+//Stops added earlier will compare less than stops added later.
+//This can be useful for reliably making sharp color transitions
+//instead of the typical blend.
+type ColorStop struct {
+	//Offset specifies the location of this color stop along the gradient's
+	//control vector.
+	Offset float64
+	Color  color.Color
+}
+
+func (c ColorStop) c() (o, r, g, b, a C.double) {
+	o = C.double(clamp01(c.Offset))
+	r, g, b, a = colorToAlpha(c.Color).c()
+	return
+}
+
 //Gradient is a linear or radial gradient.
 type Gradient interface {
 	Pattern
-	AddColorStop(float64, color.Color)
-	ColorStops() int
-	ColorStop(int) (float64, AlphaColor, error)
+	ColorStops() []ColorStop
+	addColorStops(cs []ColorStop)
 }
 
 type patternGradient struct {
 	*pattern
 }
 
-//AddColorStop adds a color stop to the gradient.
-//
-//The offset specifies the location along the gradient's control vector.
-//
-//If two (or more) stops are specified with identical offset values,
-//they will be sorted according to the order in which the stops are added.
-//Stops added earlier will compare less than stops added later.
-//This can be useful for reliably making sharp color transitions
-//instead of the typical blend.
-//
-//Originally cairo_pattern_add_color_stop_rgba.
-func (p patternGradient) AddColorStop(offset float64, c color.Color) {
-	o := C.double(clamp01(offset))
-	r, g, b, a := colorToAlpha(c).c()
-	C.cairo_pattern_add_color_stop_rgba(p.p, o, r, g, b, a)
+func (p patternGradient) addColorStops(cs []ColorStop) {
+	for _, c := range cs {
+		o, r, g, b, a := c.c()
+		C.cairo_pattern_add_color_stop_rgba(p.p, o, r, g, b, a)
+	}
 }
 
-//ColorStops returns the number of color stops in this gradient.
+//ColorStops reports the color stops defined on this gradient.
 //
-//Originally cairo_pattern_get_color_stop_count.
-func (p patternGradient) ColorStops() int {
-	var n C.int
+//Originally cairo_pattern_get_color_stop_count and
+//cairo_pattern_get_color_stop_rgba.
+func (p patternGradient) ColorStops() (cs []ColorStop) {
+	var i, n C.int
 	//only returns error if not a gradient, but disallowed by construction.
 	_ = C.cairo_pattern_get_color_stop_count(p.p, &n)
-	return int(n)
-}
-
-//ColorStop returns the nth color stop of this gradient.
-//
-//Originally cairo_pattern_get_color_stop_rgba.
-func (p patternGradient) ColorStop(n int) (offset float64, color AlphaColor, err error) {
-	var o, r, g, b, a C.double
-	err = toerr(C.cairo_pattern_get_color_stop_rgba(p.p, C.int(n), &o, &r, &g, &b, &a))
-	if err != nil {
-		return
+	cs = make([]ColorStop, 0, int(n))
+	for ; i < n; i++ {
+		var o, r, g, b, a C.double
+		//only returns error if not a gradient or invalid index, but disallowed by construction.
+		_ = C.cairo_pattern_get_color_stop_rgba(p.p, i, &o, &r, &g, &b, &a)
+		cs = append(cs, ColorStop{
+			Offset: float64(o),
+			Color:  cColor(r, g, b, a),
+		})
 	}
-	offset = float64(o)
-	color = cColor(r, g, b, a)
+
 	return
 }
+
+//BUG(jmf): get_color_stop says "Values of index are 0 to 1 less than the number returned by" count, but what does that imply?
 
 //LinearGradient is a linear gradient pattern.
 type LinearGradient struct {
@@ -295,19 +305,22 @@ type LinearGradient struct {
 	start, end Point
 }
 
-//NewLinearGradient creates a new linear gradient, from start to end.
+//NewLinearGradient creates a new linear gradient, from start to end,
+//with specified color stops.
 //
-//Originally cairo_pattern_create_linear.
-func NewLinearGradient(start, end Point) LinearGradient {
+//Originally cairo_pattern_create_linear and cairo_pattern_add_color_stop_rgba.
+func NewLinearGradient(start, end Point, colorStops ...ColorStop) LinearGradient {
 	x0, y0 := start.c()
 	x1, y1 := end.c()
 	p := C.cairo_pattern_create_linear(x0, y0, x1, y1)
+	P := patternGradient{
+		pattern: newPattern(p),
+	}
+	P.addColorStops(colorStops)
 	return LinearGradient{
-		patternGradient: patternGradient{
-			pattern: newPattern(p),
-		},
-		start: start,
-		end:   end,
+		patternGradient: P,
+		start:           start,
+		end:             end,
 	}
 }
 
@@ -337,19 +350,21 @@ type RadialGradient struct {
 }
 
 //NewRadialGradient creates a new radial gradient between the circles
-//start and end.
+//start and end, with specified color stops.
 //
-//Originally cairo_pattern_create_radial.
-func NewRadialGradient(start, end Circle) RadialGradient {
+//Originally cairo_pattern_create_radial and cairo_pattern_add_color_stop_rgba.
+func NewRadialGradient(start, end Circle, colorStops ...ColorStop) RadialGradient {
 	x0, y0, r0 := start.c()
 	x1, y1, r1 := end.c()
 	p := C.cairo_pattern_create_radial(x0, y0, r0, x1, y1, r1)
+	P := patternGradient{
+		pattern: newPattern(p),
+	}
+	P.addColorStops(colorStops)
 	return RadialGradient{
-		patternGradient: patternGradient{
-			pattern: newPattern(p),
-		},
-		start: start,
-		end:   end,
+		patternGradient: P,
+		start:           start,
+		end:             end,
 	}
 }
 
