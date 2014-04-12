@@ -27,10 +27,12 @@ func cPattern(p *C.cairo_pattern_t) (Pattern, error) {
 	case PatternTypeMesh:
 		return cNewMesh(p), nil
 	case PatternTypeRasterSource:
-		return nil, errors.New("unimplemented pattern type") //TODO: make wrong
+		return nil, errors.New("unimplemented pattern type")
 	}
 	return nil, errors.New("unimplemented pattern type")
 }
+
+//BUG(jmf): does not support user patterns
 
 //Pattern is a pattern used for drawing.
 //
