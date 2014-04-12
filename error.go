@@ -53,8 +53,9 @@ const (
 var (
 	//TODO define common ones as Err* for user cmps
 
-	ErrInvalidPathData = mkerr(errInvalidPathData)
-	ErrInvalidDash     = mkerr(errInvalidDash)
+	ErrInvalidPathData       = mkerr(errInvalidPathData)
+	ErrInvalidDash           = mkerr(errInvalidDash)
+	ErrInvalidLibcairoHandle = errors.New("Invalid handle to libcairo resource")
 )
 
 func st2str(st C.cairo_status_t) string {

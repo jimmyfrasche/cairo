@@ -194,6 +194,9 @@ func (e *XtensionSurface) MapImage(r image.Rectangle) (mappedImageSurface, error
 //
 //Originally cairo_surface_status.
 func (e *XtensionSurface) Err() error {
+	if e.s == nil {
+		return ErrInvalidLibcairoHandle
+	}
 	return toerr(C.cairo_surface_status(e.s))
 }
 

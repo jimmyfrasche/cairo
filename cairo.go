@@ -87,6 +87,9 @@ func (c *Context) Close() error {
 //
 //Originally cairo_status.
 func (c *Context) Err() error {
+	if c.c == nil {
+		return ErrInvalidLibcairoHandle
+	}
 	return toerr(C.cairo_status(c.c))
 }
 

@@ -140,6 +140,9 @@ func (c *XtensionDevice) Close() error {
 //
 //Originally cairo_device_status.
 func (c *XtensionDevice) Err() error {
+	if c.d == nil {
+		return ErrInvalidLibcairoHandle
+	}
 	return toerr(C.cairo_device_status(c.d))
 }
 

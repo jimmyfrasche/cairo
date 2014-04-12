@@ -51,6 +51,9 @@ func (f *FontOptions) Close() error {
 //
 //Originally cairo_font_options_status.
 func (f *FontOptions) Err() error {
+	if f.fo == nil {
+		return ErrInvalidLibcairoHandle
+	}
 	return toerr(C.cairo_font_options_status(f.fo))
 }
 
@@ -375,6 +378,9 @@ func (f *XtensionFont) Close() error {
 //
 //Originally cairo_font_face_status.
 func (f *XtensionFont) Err() error {
+	if f.f == nil {
+		return ErrInvalidLibcairoHandle
+	}
 	return toerr(C.cairo_font_face_status(f.f))
 }
 
@@ -464,6 +470,9 @@ func NewScaledFont(f Font, fontMatrix, CTM Matrix, opts *FontOptions) (*ScaledFo
 //
 //Originally cairo_scaled_font_status.
 func (s *ScaledFont) Err() error {
+	if s.f == nil {
+		return ErrInvalidLibcairoHandle
+	}
 	return toerr(C.cairo_scaled_font_status(s.f))
 }
 

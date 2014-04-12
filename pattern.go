@@ -75,6 +75,9 @@ func (p *pattern) Type() patternType {
 //
 //Originally cairo_pattern_status.
 func (p *pattern) Err() error {
+	if p.p == nil {
+		return ErrInvalidLibcairoHandle
+	}
 	return toerr(C.cairo_pattern_status(p.p))
 }
 
