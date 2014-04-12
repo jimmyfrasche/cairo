@@ -55,7 +55,7 @@ var (
 
 	ErrInvalidPathData       = mkerr(errInvalidPathData)
 	ErrInvalidDash           = mkerr(errInvalidDash)
-	ErrInvalidLibcairoHandle = errors.New("Invalid handle to libcairo resource")
+	ErrInvalidLibcairoHandle = errors.New("invalid handle to libcairo resource")
 )
 
 func st2str(st C.cairo_status_t) string {
