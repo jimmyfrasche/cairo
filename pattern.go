@@ -395,12 +395,12 @@ func (r RadialGradient) RadialCircles() (start, end Circle) {
 //(type 6 shading in PDF) and Gouraud-shaded triangle meshes
 //(type 4 and 5 shadings in PDF).
 //
-//Mesh patterns consist of one or more tensor-product patches,
-//which should be defined before using the mesh pattern.
-//Using a mesh pattern with a partially defined patch as source or mask
-//will put the context in an error
-//
-//Definition
+//Mesh patterns consist of one or more tensor-product patches.
+type Mesh struct {
+	*pattern
+}
+
+//Patch represents a tensor-product patch.
 //
 //A tensor-product patch is defined by 4 Bézier curves (side 0, 1, 2, 3)
 //and by 4 additional control points (P₀, P₁, P₂, P₃) that provide further
@@ -426,15 +426,15 @@ func (r RadialGradient) RadialCircles() (start, end Circle) {
 //Degenerate sides are permitted so straight lines may be used.
 //A zero length line on one side may be used to create 3 sided patches.
 //
-//Each patch is constructed by calling BeginPatch, followed by MoveTo
+//Each patch is constructed by calling MoveTo
 //to specify the first point in the patch C₀.
 //The sides are then specified by calls to CurveTo and LineTo.
 //
 //The four additional control points (P₀, P₁, P₂, P₃) in a patch can be
-//specified with SetControlPoint.
+//specified with SetControlPoints.
 //
 //At each corner of the patch (C₀, C₁, C₂, C₃) a color may be specified
-//with SetCornerColor.
+//with SetCornerColors.
 //
 //Note: The coordinates are always in pattern space. For a new pattern,
 //pattern space is identical to user space, but the relationship between
@@ -469,7 +469,6 @@ func (r RadialGradient) RadialCircles() (start, end Circle) {
 //
 //Defaults
 //
-//Calling EndPatch completes the current patch.
 //If less than 4 sides have been defined, the first missing side is defined
 //as a line from the current point to the first point of the patch (C₀)
 //and the other sides are degenerate lines from C₀ to C₀.
@@ -478,45 +477,6 @@ func (r RadialGradient) RadialCircles() (start, end Circle) {
 //
 //Any corner color whose color is not explicitly specified defaults to
 //transparent black.
-//
-//Multiple Patches
-//
-//Additional patches may be added with additional calls to BeginPatch/EndPatch.
-//
-//	red, green, blue := Color{R: 1}, Color{G: 1}, Color{B: 1}
-//
-//	m := NewMesh()
-//
-//	//Add a Coons patch
-//	err := m.BeginPatch().
-//		MoveTo(ZP).
-//		CurveTo(Pt(30, -30), Pt(60, 30), Pt(100, 0)).
-//		CurveTo(Pt(60, 30), Pt(130, 60), Pt(100, 100)).
-//		CurveTo(Pt(60, 70), Pt(30, 130), Pt(0, 100)).
-//		CurveTo(Pt(30, 70), Pt(-30, 30), ZP).
-//		SetCornerColor(0, red).
-//		SetCornerColor(1, green).
-//		SetCornerColor(2, blue).
-//		SetCornerColor(3, Color{R: 1, G: 1}).
-//		EndPatch()
-//
-//	if err != nil {
-//		panic(err) //this is not how to handle errors, outside of examples
-//	}
-//
-//	//Add a Gouraud-shaded triangle
-//	err = m.BeginPatch().
-//		MoveTo(Pt(100, 100)).
-//		LineTo(Pt(130, 130)).
-//		LineTo(Pt(130, 70)).
-//		SetCornerColor(0, red).
-//		SetCornerColor(1, green).
-//		SetCornerColor(2, blue).
-//		EndPatch()
-//
-//	if err != nil {
-//		panic(err)
-//	}
 //
 //When two patches overlap, the last one that has been added is drawn over
 //the first one.
@@ -538,42 +498,16 @@ func (r RadialGradient) RadialCircles() (start, end Circle) {
 //For a complete definition of tensor-product patches,
 //see the PDF specification (ISO32000), which describes
 //the parametrization in detail.
-type Mesh struct {
-	*pattern
-}
-
-//BUG(jmf): v, u coordinates in mesh docs are undefined. Presumably vectors, but not clear in original docs.
-
-//BUG(jmf): add line and curve types to geometry?
-
-//NewMesh creates a new mesh pattern.
-//
-//Originally cairo_pattern_create_mesh.
-func NewMesh() Mesh {
-	p := C.cairo_pattern_create_mesh()
-	return cNewMesh(p)
-}
-
-func cNewMesh(p *C.cairo_pattern_t) Mesh {
-	return Mesh{
-		pattern: newPattern(p),
-	}
-}
-
-//BeginPatch creates a new patch.
-//
-//Originally cairo_mesh_pattern_begin_patch.
-func (m Mesh) BeginPatch() Mesh {
-	C.cairo_mesh_pattern_begin_patch(m.p)
-	return m
-}
-
-//EndPatch closes the current patch and reports any error.
-//
-//Originally cairo_mesh_pattern_end_patch.
-func (m Mesh) EndPatch() error {
-	C.cairo_mesh_pattern_end_patch(m.p)
-	return m.Err()
+type Patch struct {
+	//Controls are the at most 4 control points.
+	Controls []Point
+	//Colors are the at most 4 corner colors.
+	Colors []color.Color
+	//Path is the path defining this patch.
+	//
+	//Note that if you assign an existing path all PathClosePath elements
+	//will be ignored.
+	Path Path
 }
 
 //MoveTo defines the first point of the current patch in the mesh.
@@ -581,10 +515,8 @@ func (m Mesh) EndPatch() error {
 //After this call the current point is p.
 //
 //Originally cairo_mesh_pattern_move_to.
-func (m Mesh) MoveTo(p Point) Mesh {
-	x, y := p.c()
-	C.cairo_mesh_pattern_move_to(m.p, x, y)
-	return m
+func (p *Patch) MoveTo(pt Point) {
+	p.Path.MoveTo(pt)
 }
 
 //LineTo adds a line to the current patch from the current point to p.
@@ -594,10 +526,8 @@ func (m Mesh) MoveTo(p Point) Mesh {
 //After this call the current point is p.
 //
 //Originally cairo_mesh_pattern_line_to.
-func (m Mesh) LineTo(p Point) Mesh {
-	x, y := p.c()
-	C.cairo_mesh_pattern_line_to(m.p, x, y)
-	return m
+func (p *Patch) LineTo(pt Point) {
+	p.Path.LineTo(pt)
 }
 
 //CurveTo adds a cubic Bézier spline to the current patch,
@@ -609,78 +539,139 @@ func (m Mesh) LineTo(p Point) Mesh {
 //After this call the current point will be p2.
 //
 //Originally cairo_mesh_pattern_curve_to.
-func (m Mesh) CurveTo(p0, p1, p2 Point) Mesh {
-	x0, y0 := p0.c()
-	x1, y1 := p1.c()
-	x2, y2 := p2.c()
-	C.cairo_mesh_pattern_curve_to(m.p, x0, y0, x1, y1, x2, y2)
-	return m
+func (p *Patch) CurveTo(p0, p1, p2 Point) {
+	p.Path.CurveTo(p0, p1, p2)
 }
 
-func clampMeshPoint(n int) C.uint {
-	return C.uint(n % 4)
-}
-
-//SetControlPoint sets the internal contorl point whichPoint
+//SetControlPoints sets the at most 4 internal control points
 //of the current patch.
 //
 //Originally cairo_mesh_pattern_set_control_point.
-func (m Mesh) SetControlPoint(whichPoint int, p Point) Mesh {
-	x, y := p.c()
-	wp := clampMeshPoint(whichPoint)
-	C.cairo_mesh_pattern_set_control_point(m.p, wp, x, y)
-	return m
+func (p *Patch) SetControlPoints(cps ...Point) {
+	p.Controls = cps
 }
 
-//SetCornerColor sets the color of whichCorner to c in the current patch.
+//SetCornerColors sets the at most 4 corner colors in the current patch.
 //
 //Originally cairo_mesh_pattern_set_corner_color_rgba.
-func (m Mesh) SetCornerColor(whichCorner int, c color.Color) Mesh {
-	wc := clampMeshPoint(whichCorner)
-	r, g, b, a := colorToAlpha(c).c()
-	C.cairo_mesh_pattern_set_corner_color_rgba(m.p, wc, r, g, b, a)
-	return m
+func (p *Patch) SetCornerColors(cs ...color.Color) {
+	p.Colors = cs
 }
 
-//Patches reports the number of patches defined on this mesh.
-//
-//Originally cairo_mesh_pattern_get_patch_count.
-func (m Mesh) Patches() int {
-	var pc C.uint
-	C.cairo_mesh_pattern_get_patch_count(m.p, &pc)
-	return int(pc)
+func (p *Patch) apply(m Mesh) error {
+	if len(p.Controls) > 4 {
+		return errors.New("a Patch cannot have more than 4 control points")
+	}
+	if len(p.Colors) > 4 {
+		return errors.New("a Patch cannot have more than 4 corner colors")
+	}
+	C.cairo_mesh_pattern_end_patch(m.p)
+	for i, c := range p.Controls {
+		x, y := c.c()
+		C.cairo_mesh_pattern_set_control_point(m.p, C.uint(i), x, y)
+	}
+	for i, c := range p.Colors {
+		r, g, b, a := colorToAlpha(c).c()
+		C.cairo_mesh_pattern_set_corner_color_rgba(m.p, C.uint(i), r, g, b, a)
+	}
+	for _, p := range p.Path {
+		switch p := p.(pathElement); p.dtype {
+		case PathMoveTo:
+			x, y := p.points[0].c()
+			C.cairo_mesh_pattern_move_to(m.p, x, y)
+		case PathLineTo:
+			x, y := p.points[0].c()
+			C.cairo_mesh_pattern_line_to(m.p, x, y)
+		case PathCurveTo:
+			x0, y0 := p.points[0].c()
+			x1, y1 := p.points[1].c()
+			x2, y2 := p.points[2].c()
+			C.cairo_mesh_pattern_curve_to(m.p, x0, y0, x1, y1, x2, y2)
+		case PathClosePath:
+			//ignore
+		}
+	}
+	C.cairo_mesh_pattern_end_patch(m.p)
+	return m.Err()
 }
 
-//Path gets path defining patch whichPatch.
-//
-//Originally cairo_mesh_pattern_get_path.
-func (m Mesh) Path(whichPatch int) (Path, error) {
-	p := C.cairo_mesh_pattern_get_path(m.p, C.uint(whichPatch))
-	defer C.cairo_path_destroy(p)
-	return cPath(p)
+func cPatch(m Mesh, n C.uint) (*Patch, error) {
+	if m.p == nil {
+		return nil, ErrInvalidLibcairoHandle
+	}
+
+	p := &Patch{}
+	for i := C.uint(0); i < 4; i++ {
+		var x, y, r, g, b, a *C.double
+		C.cairo_mesh_pattern_get_control_point(m.p, n, i, x, y)
+		C.cairo_mesh_pattern_get_corner_color_rgba(m.p, n, i, r, g, b, a)
+		if x != nil {
+			p.Controls = append(p.Controls, cPt(*x, *y))
+		}
+		if r != nil {
+			p.Colors = append(p.Colors, cColor(*r, *g, *b, *a))
+		}
+	}
+
+	path := C.cairo_mesh_pattern_get_path(m.p, n)
+	defer C.cairo_path_destroy(path)
+	Path, err := cPath(path)
+	if err != nil {
+		return nil, err
+	}
+	p.Path = Path
+	return p, nil
 }
 
-//BUG(jmf): cairo_mesh_patten_get_control_point. Do not understand doc:
-//"patch_num can range 0 to 1 less than the number returned by cairo_mesh_pattern_get_patch_count"
-//so whatever this caveat is, it is undocumented in this binding.
+//BUG(jmf): v, u coordinates in mesh docs are undefined. Presumably vectors, but not clear in original docs.
 
-//ControlPoint reports control point whichPoint of patch whichPatch.
+//NewMesh creates a new mesh pattern with patches.
+//There must be at least one patch.
 //
-//Originally cairo_mesh_pattern_get_control_point.
-func (m Mesh) ControlPoint(whichPatch, whichPoint int) Point {
-	wp := clampMeshPoint(whichPoint)
-	var x, y C.double
-	C.cairo_mesh_pattern_get_control_point(m.p, C.uint(whichPatch), wp, &x, &y)
-	return cPt(x, y)
+//Originally cairo_pattern_create_mesh,
+//cairo_mesh_pattern_begin_patch,
+//cairo_mesh_pattern_end_patch,
+//cairo_mesh_pattern_move_to,
+//cairo_mesh_pattern_line_to,
+//cairo_mesh_pattern_curve_to,
+//cairo_mesh_pattern_set_control_point,
+//and cairo_mesh_pattern_set_corner_color_rgba.
+func NewMesh(patches ...*Patch) (Mesh, error) {
+	if len(patches) == 0 {
+		return Mesh{}, errors.New("no patches defined on mesh pattern")
+	}
+	p := C.cairo_pattern_create_mesh()
+	m := cNewMesh(p)
+	for _, patch := range patches {
+		if err := patch.apply(m); err != nil {
+			m.p = nil
+			return m, err
+		}
+	}
+	return m, nil
 }
 
-//CornerColor reports the color of corner whichCorner of patch whichPatch.
+func cNewMesh(p *C.cairo_pattern_t) Mesh {
+	return Mesh{
+		pattern: newPattern(p),
+	}
+}
+
+//Patches returns the current patches of m.
 //
-//Originally cairo_mesh_pattern_get_corner_color_rgba.
-func (m Mesh) CornerColor(whichPatch, whichCorner int) color.Color {
-	pn := C.uint(whichPatch)
-	wc := clampMeshPoint(whichCorner)
-	var r, g, b, a C.double
-	C.cairo_mesh_pattern_get_corner_color_rgba(m.p, pn, wc, &r, &g, &b, &a)
-	return cColor(r, g, b, a)
+//Originally cairo_mesh_pattern_get_patch_count,
+//cairo_mesh_pattern_get_path,
+//cairo_mesh_pattern_get_control_point,
+//and cairo_mesh_pattern_get_corner_color_rgba.
+func (m Mesh) Patches() (patches []*Patch, err error) {
+	var n C.uint
+	_ = C.cairo_mesh_pattern_get_patch_count(m.p, &n)
+	for i := C.uint(0); i < n; i++ {
+		patch, err := cPatch(m, n)
+		if err != nil {
+			return nil, err
+		}
+		patches = append(patches, patch)
+	}
+	return
 }
