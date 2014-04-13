@@ -974,16 +974,6 @@ func (c *Context) ClosePath() *Context {
 //angles.
 //
 //The arc is circular in user space.
-//To achieve an elliptical arc, you can scale the current transformation
-//matrix by different amounts in the X and Y directions.
-//
-//For example, to draw an ellipse in the box given by x, y, width, height:
-//	c.SaveRestore(func(c *Context) error {
-//		c.Translate(x + width/2, y + width/2).
-//			Scale(width/2, height/2).
-//			Arc(Circle(ZP, 1), 0, 2*math.Pi)
-//		return nil
-//	})
 //
 //Originally cairo_arc.
 func (c *Context) Arc(circle Circle, fromAngle, toAngle float64) *Context {

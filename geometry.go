@@ -296,8 +296,12 @@ type Circle struct {
 	Radius float64
 }
 
-//ZC is the zero circle.
-var ZC Circle
+var (
+	//ZC is the zero circle.
+	ZC Circle
+	//UC is the unit circle.
+	UC = Circle{Radius: 1}
+)
 
 //Circ is shorthand for Circle{Pt(x, y), r}.Canon().
 func Circ(x, y, r float64) Circle {
