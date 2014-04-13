@@ -35,4 +35,7 @@
 //An extension is a package that integrates another portion of libcairo or
 //binds with a library that supports libcairo integration.
 //
+//Not implemented
+//	User patterns
+//	User fonts
 package cairo
