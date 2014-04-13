@@ -152,6 +152,7 @@ func (p Point) Mod(r Rectangle) Point {
 
 //A Rectangle contains the points with Min.X <= X < Max.X,
 //Min.Y <= Y < Max.Y.
+//A Rectangle is always axis-aligned.
 //It is well-formed if Min.X <= Max.X and likewise for Y.
 //Points are always well-formed.
 //A rectangle's methods always return well-formed outputs
