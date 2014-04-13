@@ -43,7 +43,7 @@ var examples = []struct {
 			SetLineWidth(6)
 
 		c.
-			Arc(cairo.Circle{p.Center, 10}, 0, 2*math.Pi).
+			Circle(p.Mul(1 / 10.)).
 			Fill()
 
 		c.
@@ -93,7 +93,7 @@ var examples = []struct {
 	}},
 	{"clip", func(c *cairo.Context) error {
 		c.
-			Arc(cairo.Circ(128, 128, 76.8), 0, 2*math.Pi).
+			Circle(cairo.Circ(128, 128, 76.8)).
 			Clip()
 
 		//Current path is not consumed by Clip.
@@ -254,13 +254,14 @@ var examples = []struct {
 
 		//diamond
 		c.MoveTo(pt(64, 25.6))
-		if err := c.RelLineTo(pt(51.2, 51.2)); err != nil {
+		p := pt(51.2, 51.2)
+		if err := c.RelLineTo(p); err != nil {
 			return err
 		}
-		if err := c.RelLineTo(pt(-51.2, 51.2)); err != nil {
+		if err := c.RelLineTo(p.Rx()); err != nil {
 			return err
 		}
-		if err := c.RelLineTo(pt(-51.2, -51.2)); err != nil {
+		if err := c.RelLineTo(p.Conj()); err != nil {
 			return err
 		}
 		c.ClosePath()
@@ -268,7 +269,7 @@ var examples = []struct {
 		//fill in blue
 		c.
 			SetLineWidth(10).
-			SetSourceColor(cairo.Color{B: 1}).
+			SetSourceColor(cairo.Blue).
 			FillPreserve()
 
 		//stroke black
@@ -333,7 +334,7 @@ var examples = []struct {
 		defer rg.Close()
 		c.
 			SetSource(rg).
-			Arc(cairo.Circ(128, 128, 76), 0, 2*math.Pi).
+			Circle(cairo.Circ(128, 128, 76)).
 			Fill()
 		return nil
 	}},
@@ -443,9 +444,9 @@ var examples = []struct {
 		//draw helper dots
 		c.
 			SetSourceColor(cairo.AlphaColor{1, .2, .2, .6}).
-			Arc(cairo.Circ(10, 135, 5.12), 0, 2*math.Pi).
+			Circle(cairo.Circ(10, 135, 5.12)).
 			ClosePath().
-			Arc(cairo.Circ(70, 165, 5.12), 0, 2*math.Pi).
+			Circle(cairo.Circ(70, 165, 5.12)).
 			Fill()
 		return nil
 	}},
