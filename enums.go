@@ -99,8 +99,8 @@ func (con Content) c() C.cairo_content_t {
 	return C.cairo_content_t(con)
 }
 
-func (c Content) String() string {
-	switch c {
+func (con Content) String() string {
+	switch con {
 	case ContentColor:
 		return "Color content only"
 	case ContentAlpha:

@@ -182,12 +182,12 @@ func (p *Path) MoveTo(pt Point) {
 	p.append(PathMoveTo, pt)
 }
 
-//MoveTo appends a PathMoveTo to the path.
+//LineTo appends a PathLineTo to the path.
 func (p *Path) LineTo(pt Point) {
 	p.append(PathLineTo, pt)
 }
 
-//LineTo appends a PathLineTo to the path.
+//CurveTo appends a PathCurveTo to the path.
 func (p *Path) CurveTo(p0, p1, p2 Point) {
 	p.append(PathCurveTo, p0, p1, p2)
 }

@@ -19,7 +19,7 @@ func XtensionRegisterRawToDevice(d deviceType, f func(*C.cairo_device_t) (Device
 	cdevtogodev[d] = f
 }
 
-//A device abstracts the rendering backend of a cairo surface.
+//A Device abstracts the rendering backend of a cairo surface.
 //
 //Devices are created using custom functions specific to the rendering system
 //you want to use.
@@ -167,6 +167,10 @@ func (c *XtensionDevice) Flush() {
 	C.cairo_device_flush(c.d)
 }
 
+//XtensionRaw returns the raw cairo_device_t pointer.
+//
+//XtensionRaw is only meant for creating new device types and should NEVER
+//be used directly.
 func (c *XtensionDevice) XtensionRaw() *C.cairo_device_t {
 	return c.d
 }
