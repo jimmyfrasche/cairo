@@ -193,8 +193,7 @@ func cRect(x0, y0, x1, y1 C.double) Rectangle {
 //like c but returns Min (Dx, Dy)
 func (r Rectangle) cWH() (x, y, w, h C.double) {
 	x, y = r.Min.c()
-	w = C.double(r.Dx())
-	h = C.double(r.Dy())
+	w, h = r.Size().c()
 	return
 }
 
@@ -210,6 +209,11 @@ func (r Rectangle) Dx() float64 {
 //Dy returns r's height.
 func (r Rectangle) Dy() float64 {
 	return r.Max.Y - r.Min.Y
+}
+
+//Size returns r's width and height.
+func (r Rectangle) Size() Point {
+	return Pt(r.Dx(), r.Dy())
 }
 
 //Verts returns all four corners of the rectangle, clockwise from r.Min.
