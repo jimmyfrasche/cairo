@@ -12,11 +12,6 @@ package cairo
 //
 //extern void go_read_callback_reaper(void*);
 //
-//static cairo_user_data_key_t* new_user_key() {
-//	return malloc(sizeof(cairo_user_data_key_t));
-//}
-//
-//
 //static cairo_status_t c_write_callback(void* w, unsigned char* data, unsigned int length) {
 //	return go_write_callback(w, data, length);
 //}
@@ -76,10 +71,11 @@ type Writer interface {
 var (
 	wmap = map[*writer]struct{}{}
 	mux  = new(sync.Mutex)
+	//there will only ever be one writer per object.
+	wkey = &C.cairo_user_data_key_t{}
 )
 
 type writer struct {
-	key *C.cairo_user_data_key_t
 	w   Writer
 	err error
 }
@@ -134,7 +130,6 @@ func go_write_callback_reaper(w unsafe.Pointer) {
 
 	W.w = nil
 	W.err = nil
-	C.free(unsafe.Pointer(W.key))
 }
 
 //XtensionRegisterWriter registers the writer wrapped by XtensionWrapWriter
@@ -146,8 +141,7 @@ func (s *XtensionSurface) XtensionRegisterWriter(w unsafe.Pointer) {
 	if err := s.Err(); err != nil {
 		go_write_callback_reaper(w)
 	}
-	W := (*writer)(w)
-	C.cairo_surface_set_user_data(s.s, W.key, w, C.wreaper_getter())
+	C.cairo_surface_set_user_data(s.s, wkey, w, C.wreaper_getter())
 }
 
 //XtensionRegisterWriter registers the writer wrapped by XtensionWrapWriter
@@ -159,8 +153,7 @@ func (d *XtensionDevice) XtensionRegisterWriter(w unsafe.Pointer) {
 	if err := d.Err(); err != nil {
 		go_write_callback_reaper(w)
 	}
-	W := (*writer)(w)
-	C.cairo_device_set_user_data(d.d, W.key, w, C.wreaper_getter())
+	C.cairo_device_set_user_data(d.d, wkey, w, C.wreaper_getter())
 }
 
 //XtensionWrapWriter wraps a writer in a special container to communicate
@@ -186,8 +179,7 @@ func (d *XtensionDevice) XtensionRegisterWriter(w unsafe.Pointer) {
 //	S := cairo.NewXtensionSurface(s)
 //	S.XtensionRegisterWriter(wrapped)
 func XtensionWrapWriter(w Writer) (closure unsafe.Pointer) {
-	key := C.new_user_key()
-	W := &writer{w: w, key: key}
+	W := &writer{w: w}
 
 	mux.Lock()
 	defer mux.Unlock()
