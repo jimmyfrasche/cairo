@@ -1,11 +1,16 @@
-//Examples come from http://cairographics.org/samples except those using images
-//as that would require bundling an image.
-//As such these examples are in the public domain and were originally
-//contributed by Øyvind Kolås.
+//Examples come from http://cairographics.org/samples and as such these
+//examples are in the public domain and were originally contributed
+//by Øyvind Kolås.
+//
+//In this directory, run
+//	go run examples.go
+//and each item in the examples slice will output a pdf of that name.
 package main
 
 import (
 	"fmt"
+	"image"
+	_ "image/png"
 	"log"
 	"math"
 	"os"
@@ -13,6 +18,18 @@ import (
 	"github.com/jimmyfrasche/cairo"
 	"github.com/jimmyfrasche/cairo/pdf"
 )
+
+var img image.Image
+
+func getImage() (image.Image, error) {
+	f, err := os.Open("romedalen.png")
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	im, _, err := image.Decode(f)
+	return im, err
+}
 
 var pt = cairo.Pt
 
@@ -111,6 +128,27 @@ var examples = []struct {
 			LineTo(pt(0, 256)).
 			SetLineWidth(10).
 			Stroke()
+
+		return nil
+	}},
+	{"clip-image", func(c *cairo.Context) error {
+		i, err := cairo.FromImage(img) //img declared globally and set in main
+		if err != nil {
+			return err
+		}
+		defer i.Close()
+
+		c.
+			Circle(cairo.Circ(128, 128, 76.8)).
+			Clip().
+			NewPath()
+
+		sz := i.Size()
+		c.Scale(pt(256/sz.X, 256/sz.Y))
+		if err = c.SetSourceSurface(i, cairo.ZP); err != nil {
+			return err
+		}
+		c.Paint()
 
 		return nil
 	}},
@@ -338,6 +376,57 @@ var examples = []struct {
 			Fill()
 		return nil
 	}},
+	{"image", func(c *cairo.Context) error {
+		i, err := cairo.FromImage(img) //img declared globally and set in main
+		if err != nil {
+			return err
+		}
+		defer i.Close()
+
+		sz := i.Size()
+		c.
+			Translate(pt(128, 128)).
+			Rotate(deg2rad(45)).
+			Scale(pt(256/sz.X, 256/sz.Y)).
+			Translate(sz.Mul(-.5))
+
+		if err = c.SetSourceSurface(i, cairo.ZP); err != nil {
+			return err
+		}
+		c.Paint()
+
+		return nil
+	}},
+	{"image-pattern", func(c *cairo.Context) error {
+		i, err := cairo.FromImage(img) //img declared globally and set in main
+		if err != nil {
+			return err
+		}
+		defer i.Close()
+		sz := i.Size()
+
+		pat, err := cairo.NewSurfacePattern(i)
+		if err != nil {
+			return err
+		}
+		defer pat.Close()
+		pat.SetExtend(cairo.ExtendRepeat)
+
+		off := pt(128, 128)
+		c.
+			Translate(off).
+			Rotate(math.Pi / 4).
+			Scale(pt(1/math.Sqrt2, 1/math.Sqrt2)).
+			Translate(off.Conj())
+
+		pat.SetMatrix(cairo.NewScaleMatrix(sz.Div(256).Mul(5)))
+
+		c.
+			SetSource(pat).
+			Rectangle(cairo.Rect(0, 0, 256, 256)).
+			Fill()
+		return nil
+	}},
 	{"multi-segment-caps", func(c *cairo.Context) error {
 		line := func(c *cairo.Context, y float64) {
 			c.MoveTo(pt(50, y)).LineTo(pt(200, y))
@@ -516,6 +605,13 @@ var examples = []struct {
 
 func main() {
 	log.SetFlags(0)
+
+	var err error
+	img, err = getImage()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	fmt.Println("Using libcairo:", cairo.Version())
 
 	count := 0
@@ -558,8 +654,6 @@ func main() {
 		if err = context.Err(); err != nil {
 			logerr(nm, err)
 		}
-
-		fmt.Println("Wrote:", outname)
 	}
 
 	fmt.Printf("%d of %d examples failed\n", count, len(examples))
