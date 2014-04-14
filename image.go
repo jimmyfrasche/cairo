@@ -133,26 +133,6 @@ func (is ImageSurface) ToImage() (*image.RGBA, error) {
 	return img, nil
 }
 
-//ReadPNG creates a new image surface and initalizes
-//it with the given PNG file.
-//
-//Originally cairo_image_surface_create_from_png_stream.
-func ReadPNG(r Reader) (ImageSurface, error) {
-	rp := wrapReader(r)
-	is := C.cairo_image_surface_create_from_png_stream(cairoreadfunct, rp)
-	s, err := cNewImageSurface(is)
-	S := s.(ImageSurface)
-	if err != nil {
-		return S, err
-	}
-	S.registerReader(rp)
-	return S, nil
-}
-
-//BUG(jmf): ImageSurface: need safe wrapper around get_data
-
-//BUG(jmf): ImageSurface: need image_surface_create_for_data analog(s)
-
 //Format reports the format of the surface.
 //
 //Originally cairo_image_surface_get_format.
@@ -184,20 +164,6 @@ func (is ImageSurface) Size() Point {
 //Originally cairo_image_surface_get_stride.
 func (is ImageSurface) Stride() int {
 	return is.stride
-}
-
-//WritePNG writes a PNG to w.
-//
-//Originally cairo_write_to_png_stream.
-func (i ImageSurface) WritePNG(w Writer) error {
-	//This is a very special case, which is why we can skip most of the machinery
-	//in io.go.
-	W := &writer{w: w}
-	err := C.cairo_surface_write_to_png_stream(i.s, XtensionCairoWriteFuncT, unsafe.Pointer(W))
-	if err == errWriteError {
-		return W.err
-	}
-	return toerr(err)
 }
 
 type mappedImageSurface struct {
