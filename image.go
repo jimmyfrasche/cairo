@@ -3,14 +3,6 @@ package cairo
 //#cgo pkg-config: cairo
 //#include <stdlib.h>
 //#include <cairo/cairo.h>
-//
-//static void gocairo_free(void* data) {
-//	free(data);
-//}
-//
-//static cairo_destroy_func_t gocairo_free_get() {
-//	return &gocairo_free;
-//}
 import "C"
 
 import (
@@ -99,7 +91,7 @@ func FromImage(img image.Image) (ImageSurface, error) {
 	}
 
 	is := C.cairo_image_surface_create_for_data(data, FormatARGB32.c(), C.int(w), C.int(h), C.int(s))
-	C.cairo_surface_set_user_data(is, imgKey, unsafe.Pointer(data), C.gocairo_free_get())
+	C.cairo_surface_set_user_data(is, imgKey, unsafe.Pointer(data), free)
 
 	return newImg(is, FormatARGB32, w, h, s)
 }
