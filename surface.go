@@ -29,21 +29,25 @@ func XtensionRegisterRawToSurface(t surfaceType, f func(*C.cairo_surface_t) (Sur
 //from a C surface.
 //
 //This is for extension writers only.
-func XtensionRevivifySurface(s *C.cairo_surface_t) (Surface, error) {
+func XtensionRevivifySurface(s *C.cairo_surface_t) (S Surface, err error) {
 	t := surfaceType(C.cairo_surface_get_type(s))
 	f, ok := csurftogosurf[t]
 	if !ok {
 		panic("No C → Go surface converter registered for " + t.String())
 	}
-	P, err := f(s)
+	id := surfaceGetID(s)
+	if t == SurfaceTypeImage {
+		_ = id
+		//TODO query mapped surface registry with id, and if so change f
+	}
+	S, err = f(s)
 	if err != nil {
 		return nil, err
 	}
-	err = P.Err()
-	if err != nil {
+	if err = S.Err(); err != nil {
 		return nil, err
 	}
-	return P, nil
+	return S, nil
 }
 
 //Surface represents an image, either as the destination of a drawing
@@ -77,6 +81,8 @@ type Surface interface {
 
 	MapImage(r image.Rectangle) (mappedImageSurface, error)
 
+	Equal(Surface) bool
+
 	//XtensionRaw is ONLY for adding libcairo subsystems outside this package.
 	//Otherwise just ignore.
 	XtensionRaw() *C.cairo_surface_t
@@ -84,6 +90,8 @@ type Surface interface {
 	//this package.
 	//Otherwise just ignore.
 	XtensionRegisterWriter(unsafe.Pointer)
+
+	id() id
 }
 
 //BUG(jmf): Surface: how to handle mime stuff?
@@ -141,9 +149,19 @@ type XtensionSurface struct {
 //
 //This is only for extension builders.
 func NewXtensionSurface(s *C.cairo_surface_t) (x *XtensionSurface) {
+	surfaceSetID(s)
 	x = &XtensionSurface{s}
 	runtime.SetFinalizer(x, (*XtensionSurface).Close)
 	return
+}
+
+func (e *XtensionSurface) id() id {
+	return surfaceGetID(e.s)
+}
+
+//Equal reports whether e and s are handles to the same surface.
+func (e *XtensionSurface) Equal(s Surface) bool {
+	return e.id() == s.id()
 }
 
 //XtensionRaw returns the raw cairo_surface_t pointer.
@@ -197,7 +215,7 @@ func (e *XtensionSurface) Err() error {
 	if e.s == nil {
 		return ErrInvalidLibcairoHandle
 	}
-	return toerr(C.cairo_surface_status(e.s))
+	return toerr(C.cairo_surface_status(e.s)) //TODO use id to extract writer error if writeerr
 }
 
 //Close frees the resources used by this surface.

@@ -52,10 +52,12 @@ type Device interface {
 	Lock() error
 	Unlock()
 	Flush()
+	Equal(Device) bool
 
 	//only for writing extensions.
 	XtensionRaw() *C.cairo_device_t
 	XtensionRegisterWriter(w unsafe.Pointer)
+	id() id
 }
 
 //XtensionDevice is the "base class" and default implementation for libcairo
@@ -71,6 +73,7 @@ type XtensionDevice struct {
 
 func newCairoDevice(d *C.cairo_device_t) (Device, error) {
 	t := deviceType(C.cairo_device_get_type(d))
+	_ = deviceGetID(d) //panics if created outside of cairo without being registered
 	f, ok := cdevtogodev[t]
 	if !ok {
 		D := NewXtensionDevice(d)
@@ -83,9 +86,19 @@ func newCairoDevice(d *C.cairo_device_t) (Device, error) {
 //
 //This is only for extension builders.
 func NewXtensionDevice(d *C.cairo_device_t) *XtensionDevice {
+	deviceSetID(d)
 	o := &XtensionDevice{d: d}
 	runtime.SetFinalizer(o, (*XtensionDevice).Close)
 	return o
+}
+
+func (c *XtensionDevice) id() id {
+	return deviceGetID(c.d)
+}
+
+//Equal reports whether c and d are handles of the same device.
+func (c *XtensionDevice) Equal(d Device) bool {
+	return c.id() == d.id()
 }
 
 //Lock acquires the device for the current thread.
