@@ -60,7 +60,7 @@ func XtensionRevivifySurface(s *C.cairo_surface_t) (S Surface, err error) {
 //Originally cairo_surface_t.
 type Surface interface {
 	CreateSimilar(c Content, w, h int) (Surface, error)
-	CreateSimilarImage(f Format, w, h int) (ImageSurface, error)
+	CreateSimilarImage(f format, w, h int) (ImageSurface, error)
 	CreateSubsurface(r Rectangle) (subsurface, error)
 
 	Err() error
@@ -337,7 +337,7 @@ func (e *XtensionSurface) CreateSimilar(c Content, w, h int) (Surface, error) {
 //have transparency, black otherwise.)
 //
 //Originally cairo_surface_create_similar_image.
-func (e *XtensionSurface) CreateSimilarImage(f Format, w, h int) (ImageSurface, error) {
+func (e *XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, error) {
 	s := C.cairo_surface_create_similar_image(e.s, f.c(), C.int(w), C.int(h))
 	stride := int(C.cairo_image_surface_get_stride(s))
 	o := ImageSurface{

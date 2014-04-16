@@ -14,11 +14,11 @@ import (
 //An ImageSurface is an in-memory surface.
 type ImageSurface struct {
 	*XtensionSurface
-	format                Format
+	format                format
 	width, height, stride int
 }
 
-func newImg(s *C.cairo_surface_t, format Format, width, height, stride int) (ImageSurface, error) {
+func newImg(s *C.cairo_surface_t, format format, width, height, stride int) (ImageSurface, error) {
 	S := ImageSurface{
 		XtensionSurface: NewXtensionSurface(s),
 		format:          format,
@@ -33,14 +33,14 @@ func newImg(s *C.cairo_surface_t, format Format, width, height, stride int) (Ima
 //and format.
 //
 //Originally cairo_image_surface_create.
-func NewImageSurface(format Format, width, height int) (ImageSurface, error) {
+func NewImageSurface(format format, width, height int) (ImageSurface, error) {
 	is := C.cairo_image_surface_create(format.c(), C.int(width), C.int(height))
 	stride := int(C.cairo_image_surface_get_stride(is))
 	return newImg(is, format, width, height, stride)
 }
 
 func cNewImageSurface(s *C.cairo_surface_t) (Surface, error) {
-	format := Format(C.cairo_image_surface_get_format(s))
+	format := format(C.cairo_image_surface_get_format(s))
 	width := int(C.cairo_image_surface_get_width(s))
 	height := int(C.cairo_image_surface_get_height(s))
 	stride := int(C.cairo_image_surface_get_stride(s))
@@ -62,16 +62,18 @@ func init() {
 	}
 }
 
-//FromImage converts an image into a surface.
+//FromImage copies an image into a surface.
 //
 //The created image surface will have the same size as img,
 //the optimal stride for img's width, and FormatARGB32.
 //
-//Originally cairo_image_surface_create_for_data.
+//Originally cairo_image_surface_create_for_data and
+//cairo_format_stride_for_width.
 func FromImage(img image.Image) (ImageSurface, error) {
+	f := FormatARGB32.c()
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
-	s := FormatARGB32.StrideForWidth(w)
+	s := int(C.cairo_format_stride_for_width(f, C.int(w)))
 
 	n := s * h
 	data := (*C.uchar)(C.calloc(C.size_t(uintptr(n)), 1))
@@ -90,7 +92,7 @@ func FromImage(img image.Image) (ImageSurface, error) {
 		i += 4 * (s/4 - w)
 	}
 
-	is := C.cairo_image_surface_create_for_data(data, FormatARGB32.c(), C.int(w), C.int(h), C.int(s))
+	is := C.cairo_image_surface_create_for_data(data, f, C.int(w), C.int(h), C.int(s))
 	C.cairo_surface_set_user_data(is, imgKey, unsafe.Pointer(data), free)
 
 	return newImg(is, FormatARGB32, w, h, s)
@@ -128,7 +130,7 @@ func (is ImageSurface) ToImage() (*image.RGBA, error) {
 //Format reports the format of the surface.
 //
 //Originally cairo_image_surface_get_format.
-func (is ImageSurface) Format() Format {
+func (is ImageSurface) Format() format {
 	return is.format
 }
 
