@@ -40,34 +40,6 @@ import (
 	"unsafe"
 )
 
-//IOShutdowner provides a hook that cairo calls on Readers and Writers
-//that are passed through to libcairo to respond to being no longer needed.
-//The error parameter is the error from the last read or write,
-//which may be nil.
-//
-//This will not be called until the object owning the Reader or Writer is
-//destroyed by libcairo.
-//
-//This is entirely optional.
-type IOShutdowner interface {
-	IOShutdown(error)
-}
-
-//Writer is just an io.Writer and this type exists to mention these points:
-//
-//Readers and Writers are passed to libcairo and the binding cannot
-//send errors back out.
-//If there is an error, you will only get a generic IO failure error.
-//If you need to know the nature of the error, see IOShutdowner.
-//
-//Once a Reader or Writer returns an error, it will halt.
-//If you handle temporary errors, like those provided by the net package,
-//you need to wrap the Reader or Writer appropriately to handle this
-//in situ.
-type Writer interface {
-	io.Writer
-}
-
 var (
 	wmap = map[id]*writer{}
 	mux  = new(sync.Mutex)
@@ -76,7 +48,7 @@ var (
 )
 
 type writer struct {
-	w   Writer
+	w   io.Writer
 	err error
 	id  id
 }
@@ -124,10 +96,6 @@ func go_write_callback_reaper(w unsafe.Pointer) {
 	mux.Lock()
 	defer mux.Unlock()
 	delete(wmap, W.id)
-
-	if s, ok := W.w.(IOShutdowner); ok {
-		s.IOShutdown(W.err)
-	}
 
 	W.w = nil
 	W.err = nil
@@ -191,7 +159,7 @@ func (d *XtensionDevice) XtensionRegisterWriter(w unsafe.Pointer) {
 //	s := C.cairo_X_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wrapped)
 //	S := cairo.NewXtensionSurface(s)
 //	S.XtensionRegisterWriter(wrapped)
-func XtensionWrapWriter(w Writer) (closure unsafe.Pointer) {
+func XtensionWrapWriter(w io.Writer) (closure unsafe.Pointer) {
 	W := &writer{w: w}
 	return unsafe.Pointer(W)
 

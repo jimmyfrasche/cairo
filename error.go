@@ -69,6 +69,12 @@ func mkerr(st C.cairo_status_t) error {
 //BUG(jmf): return any of special ones defined in above TODO and handle conversion to io/os
 //errors for the file stuff
 func toerr(st C.cairo_status_t) error {
+	return toerr_ided(st, nil)
+}
+
+func toerr_ided(st C.cairo_status_t, ider interface {
+	id() id
+}) error {
 	switch int(st) {
 	case errSuccess:
 		return nil
@@ -78,6 +84,12 @@ func toerr(st C.cairo_status_t) error {
 		return ErrInvalidPathData
 	case errInvalidDash:
 		return ErrInvalidDash
+	case errWriteError:
+		mux.Lock()
+		defer mux.Unlock()
+		if w, ok := wmap[ider.id()]; ok {
+			return w.err
+		}
 	}
 	return errors.New(st2str(st))
 }

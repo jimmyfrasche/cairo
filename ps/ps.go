@@ -12,6 +12,7 @@ package ps
 import "C"
 
 import (
+	"io"
 	"unsafe"
 
 	"github.com/jimmyfrasche/cairo"
@@ -92,7 +93,7 @@ func errChk(header, setup Comments) (err error) {
 //and cairo_ps_surface_set_eps and cairo_ps_surface_dsc_comment
 //and cairo_ps_surface_dsc_begin_setup and
 //cairo_ps_surface_dsc_begin_page_setup.
-func New(w cairo.Writer, width, height float64, eps bool, header, setup Comments) (S Surface, err error) {
+func New(w io.Writer, width, height float64, eps bool, header, setup Comments) (S Surface, err error) {
 	if err = errChk(header, setup); err != nil {
 		return
 	}

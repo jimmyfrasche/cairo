@@ -13,6 +13,7 @@ package script
 import "C"
 
 import (
+	"io"
 	"unsafe"
 
 	"github.com/jimmyfrasche/cairo"
@@ -36,7 +37,7 @@ func cNew(d *C.cairo_device_t, m mode) (Device, error) {
 //New creates a script device from writer in mode.
 //
 //Originally cairo_script_create_for_stream.
-func New(w cairo.Writer, mode mode) (Device, error) {
+func New(w io.Writer, mode mode) (Device, error) {
 	wp := cairo.XtensionWrapWriter(w)
 	d := C.cairo_script_create_for_stream(cairo.XtensionCairoWriteFuncT, wp)
 	D, err := cNew(d, mode)

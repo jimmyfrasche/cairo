@@ -215,7 +215,7 @@ func (e *XtensionSurface) Err() error {
 	if e.s == nil {
 		return ErrInvalidLibcairoHandle
 	}
-	return toerr(C.cairo_surface_status(e.s)) //TODO use id to extract writer error if writeerr
+	return toerr_ided(C.cairo_surface_status(e.s), e)
 }
 
 //Close frees the resources used by this surface.

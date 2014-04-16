@@ -156,7 +156,7 @@ func (c *XtensionDevice) Err() error {
 	if c.d == nil {
 		return ErrInvalidLibcairoHandle
 	}
-	return toerr(C.cairo_device_status(c.d))
+	return toerr_ided(C.cairo_device_status(c.d), c)
 }
 
 //Type reports the type of this device.

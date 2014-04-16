@@ -12,6 +12,8 @@ package pdf
 import "C"
 
 import (
+	"io"
+
 	"github.com/jimmyfrasche/cairo"
 )
 
@@ -43,7 +45,7 @@ func init() {
 //(1 point = 1/72 inch).
 //
 //Originally cairo_pdf_surface_create_for_stream.
-func New(w cairo.Writer, width, height float64) (Surface, error) {
+func New(w io.Writer, width, height float64) (Surface, error) {
 	wp := cairo.XtensionWrapWriter(w)
 	pdf := C.cairo_pdf_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	S, err := news(pdf)

@@ -12,6 +12,8 @@ package svg
 import "C"
 
 import (
+	"io"
+
 	"github.com/jimmyfrasche/cairo"
 )
 
@@ -31,7 +33,7 @@ type Surface struct {
 //(1 point = 1/72 inch).
 //
 //Originally cairo_svg_surface_create_for_stream.
-func New(w cairo.Writer, width, height float64) (Surface, error) {
+func New(w io.Writer, width, height float64) (Surface, error) {
 	wp := cairo.XtensionWrapWriter(w)
 	svg := C.cairo_svg_surface_create_for_stream(cairo.XtensionCairoWriteFuncT, wp, C.double(width), C.double(height))
 	s := Surface{
