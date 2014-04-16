@@ -265,16 +265,10 @@ var examples = []struct {
 
 		c.
 			MoveTo(pt(128, 25.6)).
-			LineTo(pt(230.4, 230.4))
-
-		//This can only err if c is err'd or no current point
-		if err := c.RelLineTo(pt(-102.4, 0)); err != nil {
-			return err
-		}
-
-		c.CurveTo(pt(51.2, 230.4), pt(51.2, 128), pt(128, 128))
-
-		c.Stroke()
+			LineTo(pt(230.4, 230.4)).
+			RelLineTo(pt(-102.4, 0)).
+			CurveTo(pt(51.2, 230.4), pt(51.2, 128), pt(128, 128)).
+			Stroke()
 
 		return nil
 	}},
@@ -282,27 +276,19 @@ var examples = []struct {
 		//pregnant triangle
 		c.
 			MoveTo(pt(128, 25.6)).
-			LineTo(pt(230.4, 230.4))
-		if err := c.RelLineTo(pt(-102.4, 0)); err != nil {
-			return err
-		}
-		c.
+			LineTo(pt(230.4, 230.4)).
+			RelLineTo(pt(-102.4, 0)).
 			CurveTo(pt(51.2, 230.4), pt(51.2, 128), pt(128, 128)).
 			ClosePath()
 
 		//diamond
 		c.MoveTo(pt(64, 25.6))
 		p := pt(51.2, 51.2)
-		if err := c.RelLineTo(p); err != nil {
-			return err
-		}
-		if err := c.RelLineTo(p.Rx()); err != nil {
-			return err
-		}
-		if err := c.RelLineTo(p.Conj()); err != nil {
-			return err
-		}
-		c.ClosePath()
+		c.
+			RelLineTo(p).
+			RelLineTo(p.Rx()).
+			RelLineTo(p.Conj()).
+			ClosePath()
 
 		//fill in blue
 		c.
@@ -490,27 +476,20 @@ var examples = []struct {
 		return nil
 	}},
 	{"set-line-join", func(c *cairo.Context) error {
-		angle := func(y float64, c *cairo.Context) (err error) {
-			c.MoveTo(pt(76.8, y))
-			if err = c.RelLineTo(pt(51.2, -51.2)); err != nil {
-				return
-			}
-			if err = c.RelLineTo(pt(51.2, 51.2)); err != nil {
-				return
-			}
-			c.Stroke()
-			return nil
+		angle := func(y float64, c *cairo.Context) {
+			c.
+				MoveTo(pt(76.8, y)).
+				RelLineTo(pt(51.2, -51.2)).
+				RelLineTo(pt(51.2, 51.2)).
+				Stroke()
 		}
 
 		c.SetLineWidth(40.96)
 
-		if err := angle(84.48, c.SetLineJoin(cairo.LineJoinMiter)); err != nil { //default
-			return err
-		}
-		if err := angle(161.28, c.SetLineJoin(cairo.LineJoinBevel)); err != nil {
-			return err
-		}
-		return angle(238.08, c.SetLineJoin(cairo.LineJoinRound))
+		angle(84.48, c.SetLineJoin(cairo.LineJoinMiter)) //default
+		angle(161.28, c.SetLineJoin(cairo.LineJoinBevel))
+		angle(238.08, c.SetLineJoin(cairo.LineJoinRound))
+		return nil
 	}},
 	{"text", func(c *cairo.Context) error {
 		c.
@@ -558,12 +537,8 @@ var examples = []struct {
 			SetLineWidth(6).
 			Circle(cairo.Circle{cp, 10}).
 			Fill()
-		if err := c.MoveTo(pt(128, 0)).RelLineTo(pt(0, 256)); err != nil {
-			return err
-		}
-		if err := c.MoveTo(pt(0, 128)).RelLineTo(pt(256, 0)); err != nil {
-			return err
-		}
+		c.MoveTo(pt(128, 0)).RelLineTo(pt(0, 256))
+		c.MoveTo(pt(0, 128)).RelLineTo(pt(256, 0))
 		c.Stroke()
 
 		return nil
@@ -588,17 +563,11 @@ var examples = []struct {
 			SetLineWidth(6).
 			Circle(cairo.Circle{start, 10}).
 			Fill().
-			MoveTo(start)
-		if err := c.RelLineTo(pt(0, -te.Height)); err != nil {
-			return err
-		}
-		if err := c.RelLineTo(pt(te.Width, 0)); err != nil {
-			return err
-		}
-		if err := c.RelLineTo(pt(te.BearingX, -te.BearingY)); err != nil {
-			return err
-		}
-		c.Stroke()
+			MoveTo(start).
+			RelLineTo(pt(0, -te.Height)).
+			RelLineTo(pt(te.Width, 0)).
+			RelLineTo(pt(te.BearingX, -te.BearingY)).
+			Stroke()
 		return nil
 	}},
 }

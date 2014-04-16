@@ -1063,6 +1063,8 @@ func (c *Context) Rectangle(r Rectangle) *Context {
 //RelCurveTo is a relative-coordinate version of CurveTo.
 //All points are considered as vectors with an origin at the current point.
 //
+//If there is no current point, c is now in an error state.
+//
 //It is equivalent to
 //	if p, ok := c.CurrentPoint(); ok {
 //		c.CurveTo(p.Add(v1), p.Add(v2), p.Add(v3))
@@ -1071,16 +1073,18 @@ func (c *Context) Rectangle(r Rectangle) *Context {
 //	}
 //
 //Originally cairo_rel_curve_to.
-func (c *Context) RelCurveTo(v1, v2, v3 Point) error {
+func (c *Context) RelCurveTo(v1, v2, v3 Point) *Context {
 	x0, y0 := v1.c()
 	x1, y1 := v2.c()
 	x2, y2 := v3.c()
 	C.cairo_rel_curve_to(c.c, x0, y0, x1, y1, x2, y2)
-	return c.Err()
+	return c
 }
 
 //RelLineTo is a relative-coordinate version of LineTo.
 //The point v is considered a vector with the origin at the current point.
+//
+//If there is no current point, c is now in an error state.
 //
 //It is equivalent to
 //	if p, ok := c.CurrentPoint(); ok {
@@ -1090,14 +1094,16 @@ func (c *Context) RelCurveTo(v1, v2, v3 Point) error {
 //	}
 //
 //Originally cairo_rel_line_to.
-func (c *Context) RelLineTo(v Point) error {
+func (c *Context) RelLineTo(v Point) *Context {
 	x, y := v.c()
 	C.cairo_rel_line_to(c.c, x, y)
-	return c.Err()
+	return c
 }
 
 //RelMoveTo begins a new sub-path.
 //After this call the current point will be offset by v.
+//
+//If there is no current point, c is now in an error state.
 //
 //It is equivalent to
 //	if p, ok := c.CurrentPoint(); ok {
@@ -1107,10 +1113,10 @@ func (c *Context) RelLineTo(v Point) error {
 //	}
 //
 //Originally cairo_rel_move_to.
-func (c *Context) RelMoveTo(v Point) error {
+func (c *Context) RelMoveTo(v Point) *Context {
 	x, y := v.c()
 	C.cairo_rel_move_to(c.c, x, y)
-	return c.Err()
+	return c
 }
 
 //PathExtents computes a bounding box in user-space coordinates covering
