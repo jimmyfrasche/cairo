@@ -1,5 +1,63 @@
 //Package ps implements the PostScript backend for libcairo rendering.
 //
+//EPS
+//
+//EPS files must contain only one page.
+//
+//Note that libcairo does not include the device independent preview.
+//
+//The Encapsulated PostScript Specfication† describes how to embed EPS
+//files into PostScript files
+//
+//† https://partners.adobe.com/public/developer/en/ps/5002.EPSF_Spec.pdf
+//
+//Fonts
+//
+//The PostScript surface natively supports Type 1 and TrueType fonts.
+//All other font types (including OpenType/PS) are converted to Type 1.
+//
+//Fonts are always subsetted and embedded.
+//
+//Fallback images
+//
+//Cairo will ensure that the PostScript output looks the same as an image
+//surface for the same set of operations.
+//When cairo drawing operations are performed that cannot be represented
+//natively in PostScript, the drawing is rasterized and embedded in the output.
+//
+//The rasterization of unsupported operations is limited to the smallest
+//rectangle, or set of rectangles, required to draw the unsupported operations.
+//
+//Fallback images are the main cause of large file sizes
+//and slow printing times.
+//Fallback images have a comment containing the size and location
+//of the fallback.
+//	> grep 'Fallback' output.ps
+//	output.ps:% Fallback Image: x=100, y=100, w=299, h=50 res=300dpi size=783750
+//	output.ps:% Fallback Image: x=100, y=150, w=350, h=250 res=300dpi size=4560834
+//	output.ps:% Fallback Image: x=150, y=400, w=299, h=50 res=300dpi size=783750
+//
+//Supported Features
+//
+//The following tables lists all features natively supported by the PostScript
+//surface.
+//
+//	FEATURE                          NOTES
+//	Paint/Fill/Stroke/ShowGlyphs     depending on pattern
+//	Fonts                            some may be converted to Type 1
+//	Opaque colors
+//	Images
+//	Linear gradients                 level 3 only
+//	Radial gradients                 level 3 and when one circle is inside
+//	                                 the other and extent is ExtendNone or
+//	                                 ExtendPad only.
+//	PushGroup/CreateSimilar
+//	OpSource
+//	OpOver
+//
+//
+//Requirements
+//
 //Libcairo must be compiled with
 //	CAIRO_HAS_PS_SURFACE
 //in addition to the requirements of cairo.
@@ -111,6 +169,7 @@ func New(w io.Writer, width, height float64, eps bool, header, setup Comments) (
 }
 
 //RestrictTo restricts the generated PostScript to the specified level.
+//The default is Level3.
 //
 //This method should only be called before any drawing operations have been
 //performed on this surface.
@@ -156,3 +215,15 @@ func (s Surface) AddComments(comments Comments) (err error) {
 
 	return s.Err()
 }
+
+//AddComment is shorthand for adding a single comment.
+func (s Surface) AddComment(key, value string) error {
+	return s.AddComments(Comments{Comment(key, value)})
+}
+
+//AddCommentf is shorthand for adding a single formatted comment.
+func (s Surface) AddCommentf(key, value string, vars ...interface{}) error {
+	return s.AddComments(Comments{Comment(key, value)})
+}
+
+//BUG(jmf) need to override copy/show page to run begin_page_setup beforehand?
