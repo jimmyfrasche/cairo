@@ -61,7 +61,7 @@ func XtensionRevivifySurface(s *C.cairo_surface_t) (S Surface, err error) {
 type Surface interface {
 	CreateSimilar(c Content, w, h int) (Surface, error)
 	CreateSimilarImage(f format, w, h int) (ImageSurface, error)
-	CreateSubsurface(r Rectangle) (subsurface, error)
+	CreateSubsurface(r Rectangle) (Subsurface, error)
 
 	Err() error
 	Close() error
@@ -365,13 +365,13 @@ func (e *XtensionSurface) CreateSimilarImage(f format, w, h int) (ImageSurface, 
 //surface, and the target or subsurface's device transforms are not changed.
 //
 //Originally cairo_surface_create_for_rectangle.
-func (e *XtensionSurface) CreateSubsurface(r Rectangle) (s subsurface, err error) {
+func (e *XtensionSurface) CreateSubsurface(r Rectangle) (s Subsurface, err error) {
 	r = r.Canon()
 	x0, y0 := r.Min.c()
 	x1 := C.double(r.Dx())
 	y1 := C.double(r.Dy())
 	ss := C.cairo_surface_create_for_rectangle(e.s, x0, y0, x1, y1)
-	o := subsurface{NewXtensionPagedVectorSurface(ss)}
+	o := Subsurface{NewXtensionPagedVectorSurface(ss)}
 	return o, o.Err()
 }
 
@@ -502,11 +502,11 @@ func (e XtensionPagedVectorSurface) ShowPage() {
 	showPage(e.s)
 }
 
-type subsurface struct {
+type Subsurface struct {
 	XtensionPagedVectorSurface
 }
 
 func cNewSubsurface(c *C.cairo_surface_t) (Surface, error) {
-	s := subsurface{NewXtensionPagedVectorSurface(c)}
+	s := Subsurface{NewXtensionPagedVectorSurface(c)}
 	return s, s.Err()
 }
