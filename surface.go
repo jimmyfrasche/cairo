@@ -502,6 +502,9 @@ func (e XtensionPagedVectorSurface) ShowPage() {
 	showPage(e.s)
 }
 
+//Subsurface is a buffer or restrained copy of surface.
+//
+//It must be created with CreateSubsurface.
 type Subsurface struct {
 	XtensionPagedVectorSurface
 }
