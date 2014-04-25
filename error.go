@@ -51,8 +51,6 @@ const (
 )
 
 var (
-	//TODO define common ones as Err* for user cmps
-
 	ErrInvalidPathData       = mkerr(errInvalidPathData)
 	ErrInvalidDash           = mkerr(errInvalidDash)
 	ErrInvalidLibcairoHandle = errors.New("invalid handle to libcairo resource")
@@ -66,8 +64,6 @@ func mkerr(st C.cairo_status_t) error {
 	return errors.New(st2str(st))
 }
 
-//BUG(jmf): return any of special ones defined in above TODO and handle conversion to io/os
-//errors for the file stuff
 func toerr(st C.cairo_status_t) error {
 	return toerr_ided(st, nil)
 }
