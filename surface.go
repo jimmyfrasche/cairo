@@ -35,14 +35,16 @@ func XtensionRevivifySurface(s *C.cairo_surface_t) (S Surface, err error) {
 	if !ok {
 		panic("No C → Go surface converter registered for " + t.String())
 	}
-	id := surfaceGetID(s)
-	if t == SurfaceTypeImage {
-		_ = id
-		//TODO query mapped surface registry with id, and if so change f
-	}
 	S, err = f(s)
 	if err != nil {
 		return nil, err
+	}
+	if t == SurfaceTypeImage {
+		mismux.Lock()
+		defer mismux.Unlock()
+		if _, ok := mis[surfaceGetID(s)]; ok {
+			S = toMapped(S.(ImageSurface))
+		}
 	}
 	if err = S.Err(); err != nil {
 		return nil, err
@@ -79,7 +81,7 @@ type Surface interface {
 
 	HasShowTextGlyphs() bool
 
-	MapImage(r image.Rectangle) (mappedImageSurface, error)
+	MapImage(r image.Rectangle) (MappedImageSurface, error)
 
 	Equal(Surface) bool
 
@@ -196,7 +198,7 @@ func (e *XtensionSurface) XtensionRaw() *C.cairo_surface_t {
 //is unmapped is undefined.
 //
 //Originally cairo_surface_map_to_image.
-func (e *XtensionSurface) MapImage(r image.Rectangle) (mappedImageSurface, error) {
+func (e *XtensionSurface) MapImage(r image.Rectangle) (MappedImageSurface, error) {
 	var rect C.cairo_rectangle_int_t
 	rect.x, rect.y = C.int(r.Min.X), C.int(r.Min.Y)
 	rect.width, rect.height = C.int(r.Dx()), C.int(r.Dy())

@@ -8,6 +8,7 @@ import "C"
 import (
 	"image"
 	"runtime"
+	"sync"
 	"unsafe"
 )
 
@@ -160,37 +161,59 @@ func (is ImageSurface) Stride() int {
 	return is.stride
 }
 
-type mappedImageSurface struct {
+var (
+	mis    = map[id]*C.cairo_surface_t{} //the surface this surface was created from
+	mismux = &sync.Mutex{}
+)
+
+//MappedImageSurface is a special ImageSurface created by Surface.Map.
+type MappedImageSurface struct {
 	ImageSurface
-	from *C.cairo_surface_t
 }
 
-func newMappedImageSurface(s, from *C.cairo_surface_t) (m mappedImageSurface, err error) {
+func newMappedImageSurface(s, from *C.cairo_surface_t) (m MappedImageSurface, err error) {
 	im, err1 := cNewImageSurface(s)
 	if err1 != nil {
 		err = err1
 		return
 	}
-	//Clear default finalizer so GC doesn't call surface_destroy.
-	//We do not set a new finalizer on mappedImageSurface.Close,
-	//because that would not do the right thing and the user is expected to close
-	//manually when done.
-	runtime.SetFinalizer(m.XtensionSurface, nil)
-	m = mappedImageSurface{
-		ImageSurface: im.(ImageSurface),
-		from:         from,
-	}
+	m = toMapped(im.(ImageSurface))
 	err = m.Err()
 	if err != nil {
 		m.s = nil
 	}
+	mismux.Lock()
+	defer mismux.Unlock()
+	mis[m.id()] = from
 	return
 }
 
-func (m mappedImageSurface) Close() error {
+func toMapped(i ImageSurface) MappedImageSurface {
+	//Clear default finalizer so GC doesn't call surface_destroy.
+	//We do not set a new finalizer on mappedImageSurface.Close,
+	//because that would not do the right thing and the user is expected to unmap
+	//manually when done.
+	runtime.SetFinalizer(i.XtensionSurface, nil)
+	return MappedImageSurface{
+		ImageSurface: i,
+	}
+}
+
+//Close always returns nil on a MappedImageSurface
+func (m MappedImageSurface) Close() error {
+	return nil
+}
+
+//Unmap uploads the content of the image to the target surface.
+//Afterwards, the image is destroyed.
+//
+//Originally cairo_surface_unmap.
+func (m MappedImageSurface) Unmap() error {
 	err := m.Err()
-	C.cairo_surface_unmap_image(m.from, m.s)
-	m.from = nil
+	mismux.Lock()
+	defer mismux.Unlock()
+	from := mis[m.id()]
+	C.cairo_surface_unmap_image(from, m.s)
 	m.s = nil
 	return err
 }
