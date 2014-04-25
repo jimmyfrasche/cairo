@@ -11,6 +11,14 @@
 //All drawing operations can be transformed by any affine transformation
 //(scale, rotation, shear, etc.)
 //
+//Reference semantics
+//
+//Many types in this and related packages are references, that behave much
+//like file handles, to underlying libcairo objects.
+//These handles are values that can be copied at will, but the libcairo
+//object referenced must be freed explicitly with Close (or Unmap,
+//in the case of MappedImageSurface).
+//
 //Naming Conventions
 //
 //Cairo refers to this package and its related packages.
