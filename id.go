@@ -74,15 +74,33 @@ func surfaceGetID(s *C.cairo_surface_t) id {
 //This is only necessary if you are using another library that creates its own
 //libcairo surface that will interact with this package.
 //
-//There is no way to tell if an image surface is mapped or not, so if s is
-//an image surface you must specify whether it is.
-func XtensionRegisterAlienSurface(s *C.cairo_surface_t, mapped bool) (Surface, error) {
+//If s is a mapped image surface you must use XtensionRegisterAlienMappedSurface.
+func XtensionRegisterAlienSurface(s *C.cairo_surface_t) (Surface, error) {
 	surfaceSetID(s)
-	if surfaceType(C.cairo_surface_get_type(s)) == SurfaceTypeImage && mapped {
-		//surfaceGetID(s)
-		//TODO add to mapped registry
-	}
 	return XtensionRevivifySurface(s)
+}
+
+//XtensionRegisterAlienMappedSurface registers a mapped image surface s.
+//The surface s was mapped from is required.
+//
+//It is okay if from has been previously registered.
+//
+//This is only necessary if you are using another library that creates its own
+//libcairo surface that will interact with this package.
+func XtensionRegisterAlienMappedSurface(s, from *C.cairo_surface_t) (S, From Surface, err error) {
+	From, err = XtensionRegisterAlienSurface(from)
+	if err != nil {
+		return
+	}
+	S, err = XtensionRegisterAlienSurface(s)
+	if err != nil {
+		return
+	}
+	S = toMapped(S.(ImageSurface))
+	mismux.Lock()
+	defer mismux.Unlock()
+	mis[S.id()] = from
+	return
 }
 
 func deviceSetID(d *C.cairo_device_t) {
