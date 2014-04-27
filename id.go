@@ -97,9 +97,7 @@ func XtensionRegisterAlienMappedSurface(s, from *C.cairo_surface_t) (S, From Sur
 		return
 	}
 	S = toMapped(S.(ImageSurface))
-	mismux.Lock()
-	defer mismux.Unlock()
-	mis[S.id()] = from
+	registerImageSurface(S, from)
 	return
 }
 

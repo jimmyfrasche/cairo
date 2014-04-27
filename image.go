@@ -171,6 +171,13 @@ type MappedImageSurface struct {
 	ImageSurface
 }
 
+func registerImageSurface(m Surface, from *C.cairo_surface_t) {
+	mismux.Lock()
+	defer mismux.Unlock()
+	//let original from be collected, we just need a general handle
+	mis[m.id()] = C.cairo_surface_reference(from)
+}
+
 func newMappedImageSurface(s, from *C.cairo_surface_t) (m MappedImageSurface, err error) {
 	im, err1 := cNewImageSurface(s)
 	if err1 != nil {
@@ -182,9 +189,7 @@ func newMappedImageSurface(s, from *C.cairo_surface_t) (m MappedImageSurface, er
 	if err != nil {
 		m.s = nil
 	}
-	mismux.Lock()
-	defer mismux.Unlock()
-	mis[m.id()] = from
+	registerImageSurface(m, from)
 	return
 }
 
