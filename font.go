@@ -299,6 +299,7 @@ type Font interface {
 	Type() fontType
 	Close() error
 	Err() error
+	Subtype() string
 	XtensionRaw() *C.cairo_font_face_t
 }
 
@@ -322,7 +323,8 @@ func NewXtensionFont(f *C.cairo_font_face_t) *XtensionFont {
 }
 
 var cfonttogofont = map[fontType]func(*C.cairo_font_face_t) (Font, error){
-	FontTypeToy: newToyFont,
+	FontTypeToy:  newToyFont,
+	FontTypeUser: userFont,
 }
 
 //XtensionRegisterRawToFont registers a factory to convert a libcairo
@@ -332,8 +334,27 @@ var cfonttogofont = map[fontType]func(*C.cairo_font_face_t) (Font, error){
 //It is mandatory for extensions defining new font types to call this
 //during init, otherwise users will get random not implemented panics
 //for your font.
+//
+//For user fonts you must use XtensionRegisterUserAlienFontSubtype.
 func XtensionRegisterRawToFont(t fontType, f func(*C.cairo_font_face_t) (Font, error)) {
 	cfonttogofont[t] = f
+}
+
+func userFont(f *C.cairo_font_face_t) (Font, error) {
+	id := fontGetSubtypeID(f)
+	t, ok := fontsubtypes[id]
+	if !ok {
+		panic("No C → Go font converter registered for " + t.name) //t is subtype name here
+	}
+	F, err := t.fac(f)
+	if err != nil {
+		return nil, err
+	}
+	err = F.Err()
+	if err != nil {
+		return nil, err
+	}
+	return F, nil
 }
 
 func cFont(f *C.cairo_font_face_t) (Font, error) {
@@ -358,6 +379,16 @@ func cFont(f *C.cairo_font_face_t) (Font, error) {
 //Originally cairo_font_face_get_type.
 func (f *XtensionFont) Type() fontType {
 	return fontType(C.cairo_font_face_get_type(f.f))
+}
+
+//Subtype reports the subtype of the font.
+//
+//This returns "" unless Type reports FontTypeUser.
+func (f *XtensionFont) Subtype() string {
+	if f.Type() != FontTypeUser {
+		return ""
+	}
+	return fontsubtypes[fontGetSubtypeID(f.f)].name
 }
 
 //Close frees the resources used by this font.

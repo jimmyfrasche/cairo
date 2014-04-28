@@ -32,10 +32,15 @@ type (
 	subtypeID uint64
 )
 
+func (s subtypeID) c() unsafe.Pointer {
+	return C.cgo_id_malloc(C.uint64_t(s))
+}
+
 var (
 	nextID uint64
 	idmux  = &sync.Mutex{}
 	idkey  = &C.cairo_user_data_key_t{}
+	stkey  = &C.cairo_user_data_key_t{}
 
 	subtypes = map[string]subtypeID{}
 )
@@ -116,6 +121,27 @@ func deviceGetID(d *C.cairo_device_t) id {
 	return id(ctoint(p))
 }
 
+func fontSetSubtypeID(f *C.cairo_font_face_t, s subtypeID) {
+	if fontType(C.cairo_font_face_get_type(f)) != FontTypeUser {
+		panic("font is not a user font")
+	}
+	if C.cairo_font_face_get_user_data(f, stkey) != nil {
+		panic("font already has subtype set")
+	}
+	C.cairo_font_face_set_user_data(f, stkey, s.c(), free)
+}
+
+func fontGetSubtypeID(f *C.cairo_font_face_t) subtypeID {
+	if fontType(C.cairo_font_face_get_type(f)) != FontTypeUser {
+		panic("font is not a user font")
+	}
+	p := C.cairo_font_face_get_user_data(f, stkey)
+	if p == nil {
+		panic("no subtype set: font not registered")
+	}
+	return subtypeID(ctoint(p))
+}
+
 //XtensionRegisterAlienDevice registers a device created outside of this
 //package and creates a Device of the proper type.
 //
@@ -126,16 +152,50 @@ func XtensionRegisterAlienDevice(d *C.cairo_device_t) (Device, error) {
 	return newCairoDevice(d)
 }
 
-func createSubtypeID(name string) subtypeID {
+type fontsubfac struct {
+	name string
+	fac  func(*C.cairo_font_face_t) (Font, error)
+}
+
+var (
+	fontsubtypenames = map[string]subtypeID{}
+	fontsubtypes     = map[subtypeID]*fontsubfac{}
+)
+
+//XtensionRegisterUserAlienFontSubtype registers a factory to create a Go wrapper
+//around an existing libcairo user font and associates it with a unique name,
+//retrievable via Subtype.
+//
+//After the subtype is registered, instances MUST be registered with
+//XtensionRegisterAlienUserFont.
+func XtensionRegisterAlienUserFontSubtype(name string, fac func(*C.cairo_font_face_t) (Font, error)) {
+	if name == "" {
+		panic("user font subtype name must not be empty string")
+	}
+	if fac == nil {
+		panic("user font factory must not be nil")
+	}
 	idmux.Lock()
 	defer idmux.Unlock()
 
-	if _, ok := subtypes[name]; ok {
+	if _, ok := fontsubtypenames[name]; ok {
 		panic("subtype " + name + " previously registered")
 	}
 
 	id := subtypeID(nextID)
-	subtypes[name] = id
+	fontsubtypenames[name] = id
+	fontsubtypes[id] = &fontsubfac{
+		name: name,
+		fac:  fac,
+	}
 	nextID++
-	return id
+}
+
+//XtensionRegisterAlienUserFont registers a libcairo user font with cairo.
+//
+//The subtype must be registered XtensionRegisterAlienUserFontSubtype.
+func XtensionRegisterAlienUserFont(subtype string, f *C.cairo_font_face_t) (Font, error) {
+	id := fontsubtypenames[subtype]
+	fontSetSubtypeID(f, id)
+	return fontsubtypes[id].fac(f)
 }

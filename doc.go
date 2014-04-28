@@ -44,5 +44,4 @@
 //
 //Not implemented
 //	User patterns
-//	User fonts
 package cairo
