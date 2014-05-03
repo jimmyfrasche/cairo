@@ -143,6 +143,11 @@ func (m Matrix) Mul(n Matrix) Matrix {
 	return r
 }
 
+//XtensionRaw returns the raw C value of m.
+func (m Matrix) XtensionRaw() C.cairo_matrix_t {
+	return m.m
+}
+
 //TransformDistance transforms the distance vector p by m.
 //This is similar to Transform except that the translation component of m
 //are ignored.
