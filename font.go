@@ -237,7 +237,8 @@ type TextExtents struct {
 	AdvanceY float64
 }
 
-func newTextExtents(te C.cairo_text_extents_t) TextExtents {
+//XtensionNewTextExtents converts a cairo_text_extents_t into a TextExtents.
+func XtensionNewTextExtents(te C.cairo_text_extents_t) TextExtents {
 	return TextExtents{
 		BearingX: float64(te.x_bearing),
 		BearingY: float64(te.y_bearing),
@@ -245,6 +246,18 @@ func newTextExtents(te C.cairo_text_extents_t) TextExtents {
 		Height:   float64(te.height),
 		AdvanceX: float64(te.x_advance),
 		AdvanceY: float64(te.y_advance),
+	}
+}
+
+//XtensionRaw returns t as a cairo_text_extents_t.
+func (t TextExtents) XtensionRaw() C.cairo_text_extents_t {
+	return C.cairo_text_extents_t{
+		C.double(t.BearingX),
+		C.double(t.BearingY),
+		C.double(t.Width),
+		C.double(t.Height),
+		C.double(t.AdvanceX),
+		C.double(t.AdvanceY),
 	}
 }
 

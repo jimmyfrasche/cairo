@@ -1394,7 +1394,7 @@ func (c *Context) TextExtents(s string) TextExtents {
 	cs := C.CString(s)
 	C.cairo_text_extents(c.c, cs, &t)
 	C.free(unsafe.Pointer(cs))
-	return newTextExtents(t)
+	return XtensionNewTextExtents(t)
 }
 
 //GlyphExtents reports the extents for glyphs.
@@ -1416,7 +1416,7 @@ func (c *Context) GlyphExtents(glyphs []Glyph) TextExtents {
 	var t C.cairo_text_extents_t
 	gs, n := XtensionGlyphsGotoC(glyphs, false)
 	C.cairo_glyph_extents(c.c, gs, n, &t)
-	return newTextExtents(t)
+	return XtensionNewTextExtents(t)
 }
 
 //Translate the current transformation matrix by vector v.
