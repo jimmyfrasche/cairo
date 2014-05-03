@@ -51,9 +51,14 @@ const (
 )
 
 var (
-	ErrInvalidPathData       = mkerr(errInvalidPathData)
-	ErrInvalidDash           = mkerr(errInvalidDash)
+	//ErrInvalidLibcairoHandle is returned if a Go handle to a libcairo resource
+	//has no pointer to any libcairo resource.
 	ErrInvalidLibcairoHandle = errors.New("invalid handle to libcairo resource")
+	//ErrInvalidPathData is returned if a Path contains undefined data.
+	ErrInvalidPathData = mkerr(errInvalidPathData)
+	//ErrInvalidDash is returned by Context.SetDash if the dash format
+	//is ill-specified.
+	ErrInvalidDash = mkerr(errInvalidDash)
 )
 
 func st2str(st C.cairo_status_t) string {
@@ -65,10 +70,10 @@ func mkerr(st C.cairo_status_t) error {
 }
 
 func toerr(st C.cairo_status_t) error {
-	return toerr_ided(st, nil)
+	return toerrIded(st, nil)
 }
 
-func toerr_ided(st C.cairo_status_t, ider interface {
+func toerrIded(st C.cairo_status_t, ider interface {
 	id() id
 }) error {
 	switch int(st) {
