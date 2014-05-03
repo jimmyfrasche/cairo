@@ -170,13 +170,26 @@ type FontExtents struct {
 	MaxAdvanceY float64
 }
 
-func newFontExtents(fe C.cairo_font_extents_t) FontExtents {
+//XtensionFontExtentsCtoGo converts a cairo_font_extent_t into a FontExtents
+//value.
+func XtensionFontExtentsCtoGo(fe C.cairo_font_extents_t) FontExtents {
 	return FontExtents{
 		float64(fe.ascent),
 		float64(fe.descent),
 		float64(fe.height),
 		float64(fe.max_x_advance),
 		float64(fe.max_y_advance),
+	}
+}
+
+//XtensionRaw returns f as a cairo_font_extents_t.
+func (f FontExtents) XtensionRaw() C.cairo_font_extents_t {
+	return C.cairo_font_extents_t{
+		C.double(f.Ascent),
+		C.double(f.Descent),
+		C.double(f.Height),
+		C.double(f.MaxAdvanceX),
+		C.double(f.MaxAdvanceY),
 	}
 }
 

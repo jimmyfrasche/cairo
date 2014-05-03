@@ -1372,7 +1372,7 @@ func (c *Context) ShowTextGlyphs(s string, glyphs []Glyph, clusters []TextCluste
 func (c *Context) FontExtents() FontExtents {
 	var f C.cairo_font_extents_t
 	C.cairo_font_extents(c.c, &f)
-	return newFontExtents(f)
+	return XtensionFontExtentsCtoGo(f)
 }
 
 //TextExtents reports the extents for s.
