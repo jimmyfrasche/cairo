@@ -1357,7 +1357,7 @@ func (c *Context) ShowGlyphs(glyphs []Glyph) *Context {
 //following clusters move backward.
 //
 //Originally cairo_show_text_glyphs.
-func (c *Context) ShowTextGlyphs(s string, glyphs []Glyph, clusters []TextCluster, flags textClusterFlags) *Context {
+func (c *Context) ShowTextGlyphs(s string, glyphs []Glyph, clusters []TextCluster, flags TextClusterFlags) *Context {
 	gs, gn := XtensionGlyphsGotoC(glyphs)
 	ts, tn := clustersC(clusters)
 	cs, cn := C.CString(s), C.int(len(s))

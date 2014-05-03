@@ -1080,23 +1080,24 @@ func (t surfaceType) String() string {
 	return s + " surface type"
 }
 
-//cairo_text_cluster_flags_t
-type textClusterFlags int
+//TextClusterFlags specify properties of a text cluster mapping.
+//
+//Originally cairo_text_cluster_flags_t.
+type TextClusterFlags int
 
-//The textClusterFlags type specifies properties of a text cluster mapping.
 const (
 	//TextClusterDefault specifies that the default properties are to be used.
-	TextClusterDefault textClusterFlags = 0
+	TextClusterDefault TextClusterFlags = 0
 	//TextClusterBackward specifies that the clusters in the cluster slice map
 	//to glyphs in the glyph slice from end to start.
-	TextClusterBackward textClusterFlags = C.CAIRO_TEXT_CLUSTER_FLAG_BACKWARD
+	TextClusterBackward TextClusterFlags = C.CAIRO_TEXT_CLUSTER_FLAG_BACKWARD
 )
 
-func (t textClusterFlags) c() C.cairo_text_cluster_flags_t {
+func (t TextClusterFlags) c() C.cairo_text_cluster_flags_t {
 	return C.cairo_text_cluster_flags_t(t)
 }
 
-func (t textClusterFlags) String() (s string) {
+func (t TextClusterFlags) String() (s string) {
 	switch t {
 	case 0:
 		s = "No"
