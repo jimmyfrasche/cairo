@@ -544,7 +544,11 @@ type TextCluster struct {
 	RuneLength, NumGlyphs int
 }
 
-func clustersC(tcs []TextCluster) (*C.cairo_text_cluster_t, C.int) {
+//XtensionTextClustersGotoC converts a []TextCluster
+//into an array of cairo_text_cluster_t.
+//
+//The returned array has been created with malloc.
+func XtensionTextClustersGotoC(tcs []TextCluster) (*C.cairo_text_cluster_t, C.int) {
 	n := len(tcs)
 	var t C.cairo_text_cluster_t
 	cs := (*C.cairo_text_cluster_t)(C.malloc(C.size_t(uintptr(n) * unsafe.Sizeof(t))))

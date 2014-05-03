@@ -1359,7 +1359,7 @@ func (c *Context) ShowGlyphs(glyphs []Glyph) *Context {
 //Originally cairo_show_text_glyphs.
 func (c *Context) ShowTextGlyphs(s string, glyphs []Glyph, clusters []TextCluster, flags TextClusterFlags) *Context {
 	gs, gn := XtensionGlyphsGotoC(glyphs)
-	ts, tn := clustersC(clusters)
+	ts, tn := XtensionTextClustersGotoC(clusters)
 	cs, cn := C.CString(s), C.int(len(s))
 	C.cairo_show_text_glyphs(c.c, cs, cn, gs, gn, ts, tn, flags.c())
 	C.free(unsafe.Pointer(cs))
