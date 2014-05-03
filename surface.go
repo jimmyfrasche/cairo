@@ -217,7 +217,7 @@ func (e *XtensionSurface) Err() error {
 	if e.s == nil {
 		return ErrInvalidLibcairoHandle
 	}
-	return toerr_ided(C.cairo_surface_status(e.s), e)
+	return toerrIded(C.cairo_surface_status(e.s), e)
 }
 
 //Close frees the resources used by this surface.
