@@ -520,6 +520,11 @@ func (s *ScaledFont) Close() error {
 	return err
 }
 
+//XtensionRaw returns the underlying C value of s.
+func (s *ScaledFont) XtensionRaw() *C.cairo_scaled_font_t {
+	return s.f
+}
+
 //TextCluster holds information about a single text cluster.
 //A text cluster is a minimal mapping of some glyphs to some runes.
 //
