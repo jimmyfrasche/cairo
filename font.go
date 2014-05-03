@@ -287,12 +287,19 @@ func XtensionGlyphsCtoGo(glyphs *C.cairo_glyph_t, N C.int) []Glyph {
 
 //XtensionGlyphsGotoC converts a []Glyph into an array of cairo_glyph_t.
 //
-//The returned array has been created with malloc.
-func XtensionGlyphsGotoC(gs []Glyph) (glyphs *C.cairo_glyph_t, N C.int) {
+//The returned array has been created with malloc unless useGlyphAllocate
+//is true, in which case cairo_glyph_allocate is used instead.
+//Unless the cairo_glyph_t is meant to be used with a user font,
+//useGlyphAllocate must be false.
+func XtensionGlyphsGotoC(gs []Glyph, useGlyphAllocate bool) (glyphs *C.cairo_glyph_t, N C.int) {
 	n := len(gs)
 	N = C.int(n)
 	var t C.cairo_glyph_t
-	glyphs = (*C.cairo_glyph_t)(C.malloc(C.size_t(uintptr(n) * unsafe.Sizeof(t))))
+	if useGlyphAllocate {
+		glyphs = C.cairo_glyph_allocate(N)
+	} else {
+		glyphs = (*C.cairo_glyph_t)(C.malloc(C.size_t(uintptr(n) * unsafe.Sizeof(t))))
+	}
 	iter := (*[1 << 30]C.cairo_glyph_t)(unsafe.Pointer(glyphs))[:n:n]
 	for i, g := range gs {
 		iter[i] = g.c()
@@ -575,14 +582,23 @@ func XtensionTextClustersCtoGo(clusters *C.cairo_text_cluster_t, N C.int) []Text
 //XtensionTextClustersGotoC converts a []TextCluster
 //into an array of cairo_text_cluster_t.
 //
-//The returned array has been created with malloc.
-func XtensionTextClustersGotoC(tcs []TextCluster) (*C.cairo_text_cluster_t, C.int) {
+//The returned array has been created with malloc
+//unless useTextClusterAllocator is true, in which case
+//cairo_text_cluster_allocate is used instead.
+//Unless the resultant array is to be used with a user font,
+//useTextClusterAllocator must be false.
+func XtensionTextClustersGotoC(tcs []TextCluster, useTextClusterAllocator bool) (cs *C.cairo_text_cluster_t, N C.int) {
 	n := len(tcs)
+	N = C.int(n)
 	var t C.cairo_text_cluster_t
-	cs := (*C.cairo_text_cluster_t)(C.malloc(C.size_t(uintptr(n) * unsafe.Sizeof(t))))
+	if useTextClusterAllocator {
+		cs = C.cairo_text_cluster_allocate(N)
+	} else {
+		cs = (*C.cairo_text_cluster_t)(C.malloc(C.size_t(uintptr(n) * unsafe.Sizeof(t))))
+	}
 	iter := (*[1 << 30]C.cairo_text_cluster_t)(unsafe.Pointer(cs))[:n:n]
 	for i, t := range tcs {
 		iter[i] = C.cairo_text_cluster_t{C.int(t.RuneLength), C.int(t.NumGlyphs)}
 	}
-	return cs, C.int(n)
+	return
 }
