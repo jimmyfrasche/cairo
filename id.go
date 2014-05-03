@@ -162,7 +162,7 @@ var (
 	fontsubtypes     = map[subtypeID]*fontsubfac{}
 )
 
-//XtensionRegisterUserAlienFontSubtype registers a factory to create a Go wrapper
+//XtensionRegisterAlienUserFontSubtype registers a factory to create a Go wrapper
 //around an existing libcairo user font and associates it with a unique name,
 //retrievable via Subtype.
 //
