@@ -1151,7 +1151,7 @@ func (c *Context) PathExtents() Rectangle {
 //
 //Originally cairo_glyph_path.
 func (c *Context) GlyphPath(glyphs []Glyph) *Context {
-	gs, n := glyphsC(glyphs)
+	gs, n := XtensionGlyphsGotoC(glyphs)
 	C.cairo_glyph_path(c.c, gs, n)
 	return c
 }
@@ -1335,7 +1335,7 @@ func (c *Context) ShowText(s string) *Context { //BUG(jmf): what if there is no 
 //
 //Originally cairo_show_glyphs.
 func (c *Context) ShowGlyphs(glyphs []Glyph) *Context {
-	gs, n := glyphsC(glyphs)
+	gs, n := XtensionGlyphsGotoC(glyphs)
 	C.cairo_show_glyphs(c.c, gs, n)
 	return c
 }
@@ -1358,7 +1358,7 @@ func (c *Context) ShowGlyphs(glyphs []Glyph) *Context {
 //
 //Originally cairo_show_text_glyphs.
 func (c *Context) ShowTextGlyphs(s string, glyphs []Glyph, clusters []TextCluster, flags textClusterFlags) *Context {
-	gs, gn := glyphsC(glyphs)
+	gs, gn := XtensionGlyphsGotoC(glyphs)
 	ts, tn := clustersC(clusters)
 	cs, cn := C.CString(s), C.int(len(s))
 	C.cairo_show_text_glyphs(c.c, cs, cn, gs, gn, ts, tn, flags.c())
@@ -1414,7 +1414,7 @@ func (c *Context) TextExtents(s string) TextExtents {
 //Originally cairo_glyph_extents.
 func (c *Context) GlyphExtents(glyphs []Glyph) TextExtents {
 	var t C.cairo_text_extents_t
-	gs, n := glyphsC(glyphs)
+	gs, n := XtensionGlyphsGotoC(glyphs)
 	C.cairo_glyph_extents(c.c, gs, n, &t)
 	return newTextExtents(t)
 }

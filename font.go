@@ -261,7 +261,8 @@ func cGlyph(g C.cairo_glyph_t) Glyph {
 	}
 }
 
-func cGlyphs(glyphs *C.cairo_glyph_t, N C.int) []Glyph {
+//XtensionGlyphsCtoGo converts an array of cario_glyph_t to a []Glyph.
+func XtensionGlyphsCtoGo(glyphs *C.cairo_glyph_t, N C.int) []Glyph {
 	n := int(N)
 	gs := (*[1 << 30]C.cairo_glyph_t)(unsafe.Pointer(glyphs))[:n:n]
 	out := make([]Glyph, n)
@@ -271,7 +272,10 @@ func cGlyphs(glyphs *C.cairo_glyph_t, N C.int) []Glyph {
 	return out
 }
 
-func glyphsC(gs []Glyph) (glyphs *C.cairo_glyph_t, N C.int) {
+//XtensionGlyphsGotoC converts a []Glyph into an array of cairo_glyph_t.
+//
+//The returned array has been created with malloc.
+func XtensionGlyphsGotoC(gs []Glyph) (glyphs *C.cairo_glyph_t, N C.int) {
 	n := len(gs)
 	N = C.int(n)
 	var t C.cairo_glyph_t
