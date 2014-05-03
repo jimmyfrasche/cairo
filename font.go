@@ -557,6 +557,21 @@ type TextCluster struct {
 	RuneLength, NumGlyphs int
 }
 
+//XtensionTextClustersCtoGo converts an array of cairo_text_cluster_t into
+//a []TextCluster.
+func XtensionTextClustersCtoGo(clusters *C.cairo_text_cluster_t, N C.int) []TextCluster {
+	n := int(N)
+	ts := (*[1 << 30]C.cairo_text_cluster_t)(unsafe.Pointer(clusters))[:n:n]
+	out := make([]TextCluster, n)
+	for i, v := range ts {
+		out[i] = TextCluster{
+			RuneLength: int(v.num_bytes),
+			NumGlyphs:  int(v.num_glyphs),
+		}
+	}
+	return out
+}
+
 //XtensionTextClustersGotoC converts a []TextCluster
 //into an array of cairo_text_cluster_t.
 //
