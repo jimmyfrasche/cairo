@@ -365,7 +365,7 @@ func (c *Context) AntialiasMode() antialias {
 //ErrInvalidDash is returned and the dash is not set.
 //This differs from libcairo, which puts c into an error mode.
 //
-//Orginally cairo_set_dash.
+//Originally cairo_set_dash.
 func (c *Context) SetDash(offset float64, dashes ...float64) error {
 	off := C.double(offset)
 	nd := len(dashes)
