@@ -26,6 +26,8 @@ type Surface struct {
 	extents cairo.Rectangle
 }
 
+//New creates a new recording surface.
+//
 //If extents.Empty() is true, the recording surface is unbounded.
 //
 //Originally cairo_recording_surface_create.
