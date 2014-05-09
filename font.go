@@ -348,10 +348,10 @@ type XtensionFont struct {
 	f *C.cairo_font_face_t
 }
 
-//NewXtensionFont creates a base go font from a c font face.
+//XtensionNewFont creates a base go font from a c font face.
 //
 //This is only for extension builders.
-func NewXtensionFont(f *C.cairo_font_face_t) *XtensionFont {
+func XtensionNewFont(f *C.cairo_font_face_t) *XtensionFont {
 	x := &XtensionFont{
 		f: f,
 	}
@@ -472,7 +472,7 @@ type ToyFont struct {
 
 func cNewToyFont(f *C.cairo_font_face_t, family string, s slant, w weight) ToyFont {
 	return ToyFont{
-		XtensionFont: NewXtensionFont(f),
+		XtensionFont: XtensionNewFont(f),
 		slant:        s,
 		weight:       w,
 		family:       family,
