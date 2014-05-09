@@ -367,6 +367,8 @@ const (
 	//FontTypeQuartz is a native Macintosh font.
 	FontTypeQuartz fontType = C.CAIRO_FONT_TYPE_QUARTZ //previously knonw as CAIRO_FONT_TYPE_ATSUI
 	//FontTypeUser was created using cairo's user font api.
+	//
+	//A type with FontTypeUser also has a Subtype.
 	FontTypeUser fontType = C.CAIRO_FONT_TYPE_USER
 )
 
@@ -833,6 +835,8 @@ const (
 	//PatternTypeMesh represents a pattern defined by a mesh.
 	PatternTypeMesh = C.CAIRO_PATTERN_TYPE_MESH
 	//PatternTypeRasterSource is a user pattern providing raster data.
+	//
+	//A raster pattern also has a Subtype.
 	PatternTypeRasterSource = C.CAIRO_PATTERN_TYPE_RASTER_SOURCE
 )
 
