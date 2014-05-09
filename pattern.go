@@ -27,12 +27,23 @@ func cPattern(p *C.cairo_pattern_t) (Pattern, error) {
 	case PatternTypeMesh:
 		return cNewMesh(p), nil
 	case PatternTypeRasterSource:
-		return nil, errors.New("unimplemented pattern type")
+		id := patternGetSubtypeID(p)
+		t, ok := rastersubtypes[id]
+		if !ok {
+			panic("raster pattern subtype not registered")
+		}
+		P, err := t.fac(p)
+		if err != nil {
+			return nil, err
+		}
+		err = P.Err()
+		if err != nil {
+			return nil, err
+		}
+		return P, nil
 	}
 	return nil, errors.New("unimplemented pattern type")
 }
-
-//BUG(jmf): does not support user patterns
 
 //Pattern is a pattern used for drawing.
 //
@@ -49,34 +60,39 @@ type Pattern interface {
 	SetMatrix(Matrix)
 	Matrix() Matrix
 
-	c() *C.cairo_pattern_t
+	XtensionRaw() *C.cairo_pattern_t
 }
 
-type pattern struct {
+//XtensionPattern is meant to be embedded in user-provided raster patterns.
+type XtensionPattern struct {
 	p *C.cairo_pattern_t
 }
 
-func newPattern(p *C.cairo_pattern_t) *pattern {
-	P := &pattern{p}
-	runtime.SetFinalizer(P, (*pattern).Close)
+//XtensionNewPattern returns a Pattern from a properly created cairo_pattern_t.
+//This is only useful for a cairo_pattern_t created
+//from cairo_pattern_create_raster_source.
+func XtensionNewPattern(p *C.cairo_pattern_t) *XtensionPattern {
+	P := &XtensionPattern{p}
+	runtime.SetFinalizer(P, (*XtensionPattern).Close)
 	return P
 }
 
-func (p *pattern) c() *C.cairo_pattern_t {
+//XtensionRaw returns p as a *cairo_pattern_t.
+func (p *XtensionPattern) XtensionRaw() *C.cairo_pattern_t {
 	return p.p
 }
 
 //Type returns the type of the pattern.
 //
 //Originally cairo_pattern_get_type.
-func (p *pattern) Type() patternType {
+func (p *XtensionPattern) Type() patternType {
 	return getPatternType(p.p)
 }
 
 //Err reports any error on this pattern.
 //
 //Originally cairo_pattern_status.
-func (p *pattern) Err() error {
+func (p *XtensionPattern) Err() error {
 	if p.p == nil {
 		return ErrInvalidLibcairoHandle
 	}
@@ -86,7 +102,7 @@ func (p *pattern) Err() error {
 //Close releases the pattern's resources.
 //
 //Originally cairo_pattern_destroy.
-func (p *pattern) Close() error {
+func (p *XtensionPattern) Close() error {
 	if p.p == nil {
 		return nil
 	}
@@ -100,28 +116,28 @@ func (p *pattern) Close() error {
 //SetExtend sets the mode used for drawing outside the area of this pattern.
 //
 //Originally cairo_pattern_set_extend.
-func (p *pattern) SetExtend(e extend) {
+func (p *XtensionPattern) SetExtend(e extend) {
 	C.cairo_pattern_set_extend(p.p, e.c())
 }
 
 //Extend reports the mode used for drawing outside the area of this pattern.
 //
 //Originally cairo_pattern_get_extend.
-func (p *pattern) Extend() extend {
+func (p *XtensionPattern) Extend() extend {
 	return extend(C.cairo_pattern_get_extend(p.p))
 }
 
 //SetFilter sets the filter used when resizing this pattern.
 //
 //Originally cairo_pattern_set_filter.
-func (p *pattern) SetFilter(f filter) {
+func (p *XtensionPattern) SetFilter(f filter) {
 	C.cairo_pattern_set_filter(p.p, f.c())
 }
 
 //Filter returns the filter used when resizing this pattern.
 //
 //Originally cairo_pattern_get_filter.
-func (p *pattern) Filter() filter {
+func (p *XtensionPattern) Filter() filter {
 	return filter(C.cairo_pattern_get_filter(p.p))
 }
 
@@ -141,14 +157,14 @@ func (p *pattern) Filter() filter {
 //by the inverse of the pattern matrix.
 //
 //Originally cairo_pattern_set_matrix.
-func (p pattern) SetMatrix(m Matrix) {
+func (p *XtensionPattern) SetMatrix(m Matrix) {
 	C.cairo_pattern_set_matrix(p.p, &m.m)
 }
 
 //Matrix returns this patterns transformation matrix.
 //
 //Originally cairo_pattern_get_matrix.
-func (p pattern) Matrix() Matrix {
+func (p *XtensionPattern) Matrix() Matrix {
 	var m C.cairo_matrix_t
 	C.cairo_pattern_get_matrix(p.p, &m)
 	return Matrix{m}
@@ -156,7 +172,7 @@ func (p pattern) Matrix() Matrix {
 
 //SolidPattern is a Pattern corresponding to a single translucent color.
 type SolidPattern struct {
-	*pattern
+	*XtensionPattern
 	col AlphaColor
 }
 
@@ -168,8 +184,8 @@ func NewSolidPattern(c color.Color) SolidPattern {
 	r, g, b, a := col.c()
 	p := C.cairo_pattern_create_rgba(r, g, b, a)
 	return SolidPattern{
-		pattern: newPattern(p),
-		col:     col,
+		XtensionPattern: XtensionNewPattern(p),
+		col:             col,
 	}
 }
 
@@ -177,8 +193,8 @@ func cNewSolidPattern(p *C.cairo_pattern_t) Pattern {
 	var r, g, b, a C.double
 	C.cairo_pattern_get_rgba(p, &r, &g, &b, &a)
 	return SolidPattern{
-		pattern: newPattern(p),
-		col:     cColor(r, g, b, a),
+		XtensionPattern: XtensionNewPattern(p),
+		col:             cColor(r, g, b, a),
 	}
 }
 
@@ -191,7 +207,7 @@ func (s SolidPattern) Color() AlphaColor {
 
 //SurfacePattern is a Pattern backed by a Surface.
 type SurfacePattern struct {
-	*pattern
+	*XtensionPattern
 	s Surface
 }
 
@@ -205,8 +221,8 @@ func NewSurfacePattern(s Surface) (sp SurfacePattern, err error) {
 	r := s.XtensionRaw()
 	p := C.cairo_pattern_create_for_surface(r)
 	sp = SurfacePattern{
-		pattern: newPattern(p),
-		s:       s,
+		XtensionPattern: XtensionNewPattern(p),
+		s:               s,
 	}
 	return sp, sp.Err()
 }
@@ -223,8 +239,8 @@ func cNewSurfacePattern(p *C.cairo_pattern_t) (Pattern, error) {
 		return nil, err
 	}
 	P := SurfacePattern{
-		pattern: newPattern(p),
-		s:       S,
+		XtensionPattern: XtensionNewPattern(p),
+		s:               S,
 	}
 	return P, nil
 }
@@ -265,7 +281,7 @@ type Gradient interface {
 }
 
 type patternGradient struct {
-	*pattern
+	*XtensionPattern
 }
 
 func (p patternGradient) addColorStops(cs []ColorStop) {
@@ -314,7 +330,7 @@ func NewLinearGradient(start, end Point, colorStops ...ColorStop) LinearGradient
 	x1, y1 := end.c()
 	p := C.cairo_pattern_create_linear(x0, y0, x1, y1)
 	P := patternGradient{
-		pattern: newPattern(p),
+		XtensionPattern: XtensionNewPattern(p),
 	}
 	P.addColorStops(colorStops)
 	return LinearGradient{
@@ -329,7 +345,7 @@ func cNewLinearGradient(p *C.cairo_pattern_t) Pattern {
 	C.cairo_pattern_get_linear_points(p, &x0, &y0, &x1, &y1)
 	return LinearGradient{
 		patternGradient: patternGradient{
-			pattern: newPattern(p),
+			XtensionPattern: XtensionNewPattern(p),
 		},
 		start: cPt(x0, y0),
 		end:   cPt(x1, y1),
@@ -358,7 +374,7 @@ func NewRadialGradient(start, end Circle, colorStops ...ColorStop) RadialGradien
 	x1, y1, r1 := end.c()
 	p := C.cairo_pattern_create_radial(x0, y0, r0, x1, y1, r1)
 	P := patternGradient{
-		pattern: newPattern(p),
+		XtensionPattern: XtensionNewPattern(p),
 	}
 	P.addColorStops(colorStops)
 	return RadialGradient{
@@ -373,7 +389,7 @@ func cNewRadialGradient(p *C.cairo_pattern_t) Pattern {
 	C.cairo_pattern_get_radial_circles(p, &x0, &y0, &r0, &x1, &y1, &r1)
 	return RadialGradient{
 		patternGradient: patternGradient{
-			pattern: newPattern(p),
+			XtensionPattern: XtensionNewPattern(p),
 		},
 		start: cCirc(x0, y0, r0),
 		end:   cCirc(x0, y0, r0),
@@ -397,7 +413,7 @@ func (r RadialGradient) RadialCircles() (start, end Circle) {
 //
 //Mesh patterns consist of one or more tensor-product patches.
 type Mesh struct {
-	*pattern
+	*XtensionPattern
 }
 
 //Patch represents a tensor-product patch.
@@ -653,7 +669,7 @@ func NewMesh(patches ...*Patch) (Mesh, error) {
 
 func cNewMesh(p *C.cairo_pattern_t) Mesh {
 	return Mesh{
-		pattern: newPattern(p),
+		XtensionPattern: XtensionNewPattern(p),
 	}
 }
 

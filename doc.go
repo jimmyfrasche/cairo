@@ -41,7 +41,4 @@
 //You may ignore these unless you are writing an extension.
 //An extension is a package that integrates another portion of libcairo or
 //binds with a library that supports libcairo integration.
-//
-//Not implemented
-//	User patterns
 package cairo

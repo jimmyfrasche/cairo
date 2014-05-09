@@ -142,6 +142,27 @@ func fontGetSubtypeID(f *C.cairo_font_face_t) subtypeID {
 	return subtypeID(ctoint(p))
 }
 
+func patternSetSubtypeID(p *C.cairo_pattern_t, s subtypeID) {
+	if fontType(C.cairo_pattern_get_type(p)) != PatternTypeRasterSource {
+		panic("pattern is not a raster pattern")
+	}
+	if C.cairo_pattern_get_user_data(p, stkey) != nil {
+		panic("pattern already has subtype set")
+	}
+	C.cairo_pattern_set_user_data(p, stkey, s.c(), free)
+}
+
+func patternGetSubtypeID(p *C.cairo_pattern_t) subtypeID {
+	if fontType(C.cairo_pattern_get_type(p)) != PatternTypeRasterSource {
+		panic("pattern is not a raster pattern")
+	}
+	ptr := C.cairo_pattern_get_user_data(p, stkey)
+	if ptr == nil {
+		panic("no subtype set: pattern not registered")
+	}
+	return subtypeID(ctoint(ptr))
+}
+
 //XtensionRegisterAlienDevice registers a device created outside of this
 //package and creates a Device of the proper type.
 //
@@ -198,4 +219,53 @@ func XtensionRegisterAlienUserFont(subtype string, f *C.cairo_font_face_t) (Font
 	id := fontsubtypenames[subtype]
 	fontSetSubtypeID(f, id)
 	return fontsubtypes[id].fac(f)
+}
+
+type rastersubfac struct {
+	name string
+	fac  func(*C.cairo_pattern_t) (Pattern, error)
+}
+
+var (
+	rastersubtypenames = map[string]subtypeID{}
+	rastersubtypes     = map[subtypeID]*rastersubfac{}
+)
+
+//XtensionRegisterAlienRasterPatternSubtype registers a factory to create
+//a Go wrapper an existing libcairo raster pattern and associates it with
+//a unique name, retrievable via Subtype.
+//
+//After the subtype is registered, instances MUST be registered with
+//XtensionRegisterAlienRasterPattern.
+func XtensionRegisterAlienRasterPatternSubtype(name string, fac func(*C.cairo_pattern_t) (Pattern, error)) {
+	if name == "" {
+		panic("raster pattern subtype name must not be empty string")
+	}
+	if fac == nil {
+		panic("raster pattern factory must not be nil")
+	}
+	idmux.Lock()
+	defer idmux.Unlock()
+
+	if _, ok := rastersubtypenames[name]; ok {
+		panic("subtype " + name + "previously registered")
+	}
+
+	id := subtypeID(nextID)
+	rastersubtypenames[name] = id
+	rastersubtypes[id] = &rastersubfac{
+		name: name,
+		fac:  fac,
+	}
+	nextID++
+}
+
+//XtensionRegisterAlienRasterPattern registers a libcairo user font with cairo.
+//
+//The subtype must be registered
+//with XtensionRegisterAlienRasterPatternSubtype.
+func XtensionRegisterAlienRasterPattern(subtype string, p *C.cairo_pattern_t) (Pattern, error) {
+	id := rastersubtypenames[subtype]
+	patternSetSubtypeID(p, id)
+	return rastersubtypes[id].fac(p)
 }

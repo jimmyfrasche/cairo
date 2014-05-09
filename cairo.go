@@ -268,7 +268,7 @@ func (c *Context) SetSourceColor(col color.Color) *Context {
 //
 //Originally cairo_set_source.
 func (c *Context) SetSource(source Pattern) *Context {
-	C.cairo_set_source(c.c, source.c())
+	C.cairo_set_source(c.c, source.XtensionRaw())
 	return c
 }
 
@@ -709,7 +709,7 @@ func (c *Context) InFill(pt Point) bool {
 //
 //Originally cairo_mask.
 func (c *Context) Mask(p Pattern) *Context {
-	C.cairo_mask(c.c, p.c())
+	C.cairo_mask(c.c, p.XtensionRaw())
 	return c
 }
 
