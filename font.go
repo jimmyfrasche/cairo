@@ -381,7 +381,7 @@ func userFont(f *C.cairo_font_face_t) (Font, error) {
 	id := fontGetSubtypeID(f)
 	t, ok := fontsubtypes[id]
 	if !ok {
-		panic("No C → Go font converter registered for " + t.name) //t is subtype name here
+		panic("user font subtype not registered")
 	}
 	F, err := t.fac(f)
 	if err != nil {
