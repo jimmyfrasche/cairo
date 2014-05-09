@@ -31,6 +31,9 @@ func (p version) String() string {
 	return C.GoString(v)
 }
 
+//Versions reports the supported PDF versions.
+//
+//Originally cairo_pdf_get_versions.
 func Versions() (versions []version) {
 	var vs *C.cairo_pdf_version_t
 	var N C.int
