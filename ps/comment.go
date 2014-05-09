@@ -56,7 +56,7 @@ func (c comment) invalidKey() error {
 		return nil
 	}
 	if c.key == "" {
-		return errors.New("No header specified")
+		return errors.New("no header specified")
 	}
 	if strings.IndexFunc(c.key, unicode.IsSpace) != -1 {
 		return fmt.Errorf("DSC key cannot contain spaces, got: %s", c.key)
