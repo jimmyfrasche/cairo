@@ -225,5 +225,3 @@ func (s Surface) AddComment(key, value string) error {
 func (s Surface) AddCommentf(key, value string, vars ...interface{}) error {
 	return s.AddComments(Comments{Comment(key, value)})
 }
-
-//BUG(jmf) need to override copy/show page to run begin_page_setup beforehand?
