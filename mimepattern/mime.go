@@ -12,11 +12,13 @@ const (
 	//
 	//Originally CAIRO_MIME_TYPE_PNG.
 	PNG mime = "image/png"
-	//JPEG is the Joint Photographic Experts Group (JPEG) image coding standard (ISO/IEC 10918-1).
+	//JPEG is the Joint Photographic Experts Group (JPEG) image coding standard
+	//(ISO/IEC 10918-1).
 	//
 	//Originally CAIRO_MIME_TYPE_JPEG.
 	JPEG mime = "image/jpeg"
-	//JP2 is the Joint Photographic Experts Group (JPEG) 2000 image coding standard (ISO/IEC 15444-1).
+	//JP2 is the Joint Photographic Experts Group (JPEG) 2000 image coding standard
+	//(ISO/IEC 15444-1).
 	//
 	//Originally CAIRO_MIME_TYPE_JP2.
 	JP2 mime = "image/jp2"
