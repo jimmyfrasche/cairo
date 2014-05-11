@@ -56,10 +56,6 @@ func init() {
 	cairo.XtensionRegisterRawToSurface(cairo.SurfaceTypeSVG, cNew)
 }
 
-//BUG(jmf): add documentation about mime type to New after I figure out what that entails.
-
-//BUG(jmf): add special method for attaching url's as that's handled specially anyhoo.
-
 //RestrictTo restricts the generated SVG file to the specified version.
 //
 //This method should only be called before any drawing operations have been

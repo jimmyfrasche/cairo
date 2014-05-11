@@ -96,8 +96,6 @@ type Surface interface {
 	id() id
 }
 
-//BUG(jmf): Surface: how to handle mime stuff?
-
 //VectorBacked is the set of methods available to a surface
 //with a native vector backend.
 //
