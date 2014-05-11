@@ -351,8 +351,3 @@ func (c Circle) Mul(k float64) Circle {
 func (c Circle) Empty() bool {
 	return c.Radius == 0
 }
-
-//BUG(jmf): finish copying image.Point/Rectangle interfaces over to float
-//and document. Just need Inset.
-
-//BUG(jmf): bring circle to feature parity with rectangle
