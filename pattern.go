@@ -227,9 +227,6 @@ func NewSurfacePattern(s Surface) (sp SurfacePattern, err error) {
 	return sp, sp.Err()
 }
 
-//BUG(jmf): (potentially) assuming pattern returned by cairo_pattern_create_for_surface
-//is the same as the pattern put into it. If this is not true, things could get messy.
-
 func cNewSurfacePattern(p *C.cairo_pattern_t) (Pattern, error) {
 	var s *C.cairo_surface_t
 	C.cairo_pattern_get_surface(p, &s)
@@ -312,8 +309,6 @@ func (p patternGradient) ColorStops() (cs []ColorStop) {
 
 	return
 }
-
-//BUG(jmf): get_color_stop says "Values of index are 0 to 1 less than the number returned by" count, but what does that imply?
 
 //LinearGradient is a linear gradient pattern.
 type LinearGradient struct {
@@ -512,8 +507,10 @@ type Mesh struct {
 //More information
 //
 //For a complete definition of tensor-product patches,
-//see the PDF specification (ISO32000), which describes
+//see the PDF specification (ISO32000) †, which describes
 //the parametrization in detail.
+//
+//† https://wwwimages2.adobe.com/content/dam/Adobe/en/devnet/pdf/pdfs/PDF32000_2008.pdf
 type Patch struct {
 	//Controls are the at most 4 control points.
 	Controls []Point
@@ -638,8 +635,6 @@ func cPatch(m Mesh, n C.uint) (*Patch, error) {
 	p.Path = Path
 	return p, nil
 }
-
-//BUG(jmf): v, u coordinates in mesh docs are undefined. Presumably vectors, but not clear in original docs.
 
 //NewMesh creates a new mesh pattern with patches.
 //There must be at least one patch.
