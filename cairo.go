@@ -872,7 +872,7 @@ func (c *Context) AppendPath(path Path) error {
 		return err
 	}
 	C.cairo_append_path(c.c, p)
-	C.cairo_path_destroy(p) //BUG(jmf): does cairo take control of path after append path?
+	C.cairo_path_destroy(p)
 	return c.Err()
 }
 
@@ -1323,7 +1323,7 @@ func (c *Context) ScaledFont() (*ScaledFont, error) {
 //See ShowGlyphs for the "real" text display api.
 //
 //Originally cairo_show_text.
-func (c *Context) ShowText(s string) *Context { //BUG(jmf): what if there is no current point before calling ShowText?
+func (c *Context) ShowText(s string) *Context {
 	cs := C.CString(s)
 	C.cairo_show_text(c.c, cs)
 	C.free(unsafe.Pointer(cs))
