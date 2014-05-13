@@ -557,6 +557,11 @@ func (s *ScaledFont) Close() error {
 	return err
 }
 
+//Font returns the Font s was created with.
+func (s *ScaledFont) Font() (Font, error) {
+	return cFont(C.cairo_scaled_font_get_font_face(s.f))
+}
+
 //XtensionRaw returns the underlying C value of s.
 func (s *ScaledFont) XtensionRaw() *C.cairo_scaled_font_t {
 	return s.f
